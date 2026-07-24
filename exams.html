@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>الامتحانات | Mr. Mohammed Elhafawy</title>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <style>
+        :root {
+            --bg-primary: #f6f4f0; --bg-card: #ffffff; --text-primary: #1e2a3a;
+            --text-secondary: #4a5568; --text-muted: #718096; --border-color: #e2dcd0;
+            --accent-1: #3182ce; --accent-2: #2b6cb0; --accent-3: #2c7a7b; --danger: #c53030;
+            --gradient-1: linear-gradient(135deg, #3182ce, #2b6cb0, #2c7a7b);
+            --radius-lg: 20px; --radius-md: 14px; --shadow-sm: 0 1px 3px rgba(0,0,0,0.04);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.06); --font: 'Cairo', sans-serif;
+            --transition: 0.3s cubic-bezier(0.4,0,0.2,1);
+        }
+        body.dark {
+            --bg-primary: #1a202c; --bg-card: #2d3748; --text-primary: #e2e8f0;
+            --text-secondary: #a0aec0; --text-muted: #718096; --border-color: #4a5568;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.3); --shadow-md: 0 4px 12px rgba(0,0,0,0.4);
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:var(--font); background:var(--bg-primary); color:var(--text-primary); display:flex; min-height:100vh; transition: background 0.3s, color 0.3s; }
+        .sidebar {
+            width:260px; background:var(--bg-card); border-left:1px solid var(--border-color);
+            padding:24px 14px; display:flex; flex-direction:column; gap:4px; flex-shrink:0;
+            z-index:50; transition:transform 0.3s; box-shadow:var(--shadow-sm);
+        }
+        .sidebar .logo-icon { width:42px; height:42px; border-radius:var(--radius-md); background:var(--gradient-1); display:flex; align-items:center; justify-content:center; font-weight:700; color:#fff; font-size:1.1rem; margin-bottom:20px; overflow:hidden; }
+        .sidebar .logo-icon img { width:100%; height:100%; object-fit:cover; border-radius:inherit; }
+        .sidebar nav a { display:flex; align-items:center; gap:10px; padding:10px 14px; border-radius:24px; color:var(--text-secondary); text-decoration:none; font-weight:500; font-size:0.88rem; margin-bottom:3px; transition:0.2s; }
+        .sidebar nav a.active, .sidebar nav a:hover { background:rgba(49,130,206,0.08); color:var(--accent-2); }
+        .main { flex:1; display:flex; flex-direction:column; overflow-y:auto; max-height:100vh; background:var(--bg-primary); }
+        .topbar { padding:14px 24px; display:flex; justify-content:space-between; align-items:center; background:var(--bg-card); border-bottom:1px solid var(--border-color); position:sticky; top:0; z-index:20; box-shadow:var(--shadow-sm); }
+        .topbar h2 { font-size:1.2rem; font-weight:700; background:var(--gradient-1); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+        .btn { padding:8px 16px; border-radius:24px; font-weight:600; font-size:0.82rem; border:1.5px solid var(--border-color); background:var(--bg-card); color:var(--text-primary); cursor:pointer; transition:0.2s; display:inline-flex; align-items:center; gap:6px; text-decoration:none; }
+        .btn:hover { background:rgba(0,0,0,0.02); border-color:var(--accent-2); }
+        .btn-primary { background:var(--gradient-1); border:none; color:#fff; }
+        .btn-primary:hover { opacity:0.9; }
+        .content { padding:24px; max-width:900px; margin:0 auto; width:100%; }
+        .card { background:var(--bg-card); border:1px solid var(--border-color); border-radius:var(--radius-lg); padding:20px; margin-bottom:16px; box-shadow:var(--shadow-sm); }
+        .exam-grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap:16px; }
+        .exam-card { text-decoration:none; color:inherit; transition:0.3s; }
+        .exam-card:hover { transform:translateY(-3px); box-shadow:0 8px 18px rgba(0,0,0,0.08); }
+        .badge { padding:4px 10px; border-radius:14px; font-size:0.72rem; font-weight:600; display:inline-block; }
+        .badge-success { background:rgba(44,122,123,0.15); color:#276749; }
+        .badge-warning { background:rgba(214,158,46,0.15); color:#975a16; }
+        .badge-danger { background:rgba(197,48,48,0.1); color:#b91c1c; }
+        body.dark .badge-success { background:rgba(44,122,123,0.2); color:#81e6d9; }
+        body.dark .badge-warning { background:rgba(214,158,46,0.2); color:#fbd38d; }
+        body.dark .badge-danger { background:rgba(197,48,48,0.2); color:#feb2b2; }
+        .empty-state { text-align:center; padding:40px; color:var(--text-muted); }
+        .theme-toggle { background:var(--bg-card); border:1px solid var(--border-color); border-radius:20px; padding:6px 10px; cursor:pointer; font-size:1rem; color:var(--text-primary); transition:0.2s; }
+        .theme-toggle:hover { background:rgba(0,0,0,0.03); }
+        @media (max-width:768px) {
+            .sidebar { position:fixed; right:-280px; top:0; bottom:0; z-index:55; }
+            .sidebar.open { right:0; }
+        }
+        .menu-toggle { display:none; background:none; border:none; color:var(--text-primary); font-size:1.6rem; cursor:pointer; }
+        @media (max-width:768px) { .menu-toggle { display:block; } }
+        .overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.3); z-index:40; }
+        .overlay.show { display:block; }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="overlay" id="overlay"></div>
+<aside class="sidebar" id="sidebar">
+    <div class="logo-icon" id="sidebarLogo">M</div>
+    <nav>
+        <a href="dashboard.html">🏠 الرئيسية</a>
+        <a href="assignments.html">📄 الواجبات</a>
+        <a href="exams.html" class="active">📝 الامتحانات</a>
+        <a href="schedule.html">📅 جداول الحصص</a>
+        <a href="questions.html">💬 الأسئلة</a>
+        <a href="profile.html">👤 حسابي</a>
+        <a href="settings.html">⚙️ الإعدادات</a>
+    </nav>
+</aside>
+<div class="main">
+    <div class="topbar">
+        <button class="menu-toggle" id="menuToggle">☰</button>
+        <h2>📝 الامتحانات</h2>
+        <div style="display:flex; gap:10px; align-items:center;">
+            <button class="theme-toggle" id="themeToggle" title="الوضع الليلي">🌙</button>
+            <a href="dashboard.html" class="btn">رجوع</a>
+        </div>
+    </div>
+    <div class="content" id="examsContent">⏳ جاري تحميل الامتحانات...</div>
+</div>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyA4ilrZB4P8wwRDLdminQkwS9KYY50XY8c",
+        authDomain: "mr-mohammed-elhafawy.firebaseapp.com",
+        projectId: "mr-mohammed-elhafawy",
+        storageBucket: "mr-mohammed-elhafawy.firebasestorage.app",
+        messagingSenderId: "959200386071",
+        appId: "1:959200386071:web:a70902bb0d6064e6081052"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const MAX_ATTEMPTS = 3;
+    const studentId = localStorage.getItem('studentId');
+    if (!studentId) window.location.href = 'login.html';
+
+    const SUBJECTS = { 'الأول الإعدادي':'Science','الثاني الإعدادي':'Science','الثالث الإعدادي':'Science','الأول الثانوي':'Integrated Science','الثاني الثانوي':'Physics','الثالث الثانوي':'Physics' };
+
+    // Theme
+    const themeToggle = document.getElementById('themeToggle');
+    if (localStorage.getItem('darkMode') === 'true') { document.body.classList.add('dark'); themeToggle.textContent = '☀️'; }
+    themeToggle.addEventListener('click', () => { document.body.classList.toggle('dark'); const isDark = document.body.classList.contains('dark'); localStorage.setItem('darkMode', isDark); themeToggle.textContent = isDark ? '☀️' : '🌙'; });
+
+    // Load logo
+    (async function loadSettings() {
+        const doc = await db.collection('settings').doc('platform').get().catch(() => null);
+        if (doc && doc.exists && doc.data().logo) document.getElementById('sidebarLogo').innerHTML = `<img src="${doc.data().logo}" alt="لوجو">`;
+    })();
+
+    async function loadExams() {
+        const container = document.getElementById('examsContent');
+        try {
+            const userDoc = await db.collection('students').doc(studentId).get();
+            if (!userDoc.exists || userDoc.data().status !== 'مفعل') { window.location.href='login.html'; return; }
+            const grade = userDoc.data().grade || '';
+
+            const examsSnap = await db.collection('exams').where('grade','==',grade).get();
+            const exams = []; examsSnap.forEach(d => exams.push({id:d.id, ...d.data()}));
+
+            const resultsSnap = await db.collection('examResults').where('studentId','==',studentId).get();
+            const results = {}; resultsSnap.forEach(d => { const r = d.data(); if (!results[r.examId]) results[r.examId] = []; results[r.examId].push(r); });
+
+            container.innerHTML = exams.length ? `
+            <div class="exam-grid">
+                ${exams.map(e => {
+                    const attempts = results[e.id] || [];
+                    const remaining = MAX_ATTEMPTS - attempts.length;
+                    const best = attempts.length ? Math.max(...attempts.map(a => a.percentage||0)) : null;
+                    const canAttempt = remaining > 0;
+                    return `
+                    <div class="card exam-card">
+                        <h3>${e.name || 'امتحان'}</h3>
+                        <p style="color:var(--text-secondary); font-size:0.85rem;">⏱️ ${e.time||60} دقيقة | 📝 ${e.questions?.length||0} سؤال</p>
+                        <p style="color:var(--text-muted); font-size:0.8rem;">المادة: ${SUBJECTS[grade]||''}</p>
+                        <div style="margin:10px 0;">
+                            <span class="badge ${canAttempt?'badge-success':'badge-danger'}">${canAttempt ? `متاح - ${remaining} محاولات` : 'لا توجد محاولات'}</span>
+                            ${best !== null ? `<span class="badge badge-warning" style="margin-right:6px;">أفضل نتيجة: ${best}%</span>` : ''}
+                        </div>
+                        ${canAttempt ? `<a href="exam.html?id=${e.id}" class="btn btn-primary" style="width:100%; text-align:center;">بدء الامتحان</a>` : `<button class="btn" disabled style="width:100%;">انتهت المحاولات</button>`}
+                    </div>`;
+                }).join('')}
+            </div>` : '<div class="empty-state">لا توجد امتحانات لصفك حالياً</div>';
+        } catch(e) {
+            container.innerHTML = '<div class="empty-state">❌ حدث خطأ في تحميل الامتحانات</div>';
+        }
+    }
+    loadExams();
+
+    // Mobile menu
+    document.getElementById('menuToggle').addEventListener('click', () => { document.getElementById('sidebar').classList.toggle('open'); document.getElementById('overlay').classList.toggle('show'); });
+    document.getElementById('overlay').addEventListener('click', () => { document.getElementById('sidebar').classList.remove('open'); document.getElementById('overlay').classList.remove('show'); });
+    window.logout = () => { localStorage.clear(); window.location.href = 'login.html'; };
+</script>
+</body>
+</html>
