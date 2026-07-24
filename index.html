@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="منصة Mr. Mohammed Elhafawy التعليمية - Science & Physics">
+    <meta name="theme-color" content="#f6f4f0">
+    <title>Mr. Mohammed Elhafawy | Science & Physics</title>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <style>
+        :root {
+            --bg-primary: #f6f4f0;
+            --bg-card: #ffffff;
+            --text-primary: #1e2a3a;
+            --text-secondary: #4a5568;
+            --text-muted: #718096;
+            --border-color: #e2dcd0;
+            --accent-1: #3182ce;
+            --accent-2: #2b6cb0;
+            --accent-3: #2c7a7b;
+            --danger: #c53030;
+            --gradient-1: linear-gradient(135deg, #3182ce, #2b6cb0, #2c7a7b);
+            --gradient-2: linear-gradient(135deg, #2b6cb0, #3182ce, #2c7a7b);
+            --radius-lg: 20px;
+            --radius-md: 14px;
+            --radius-sm: 10px;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.04);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.06);
+            --shadow-lg: 0 12px 28px rgba(0,0,0,0.08);
+            --font: 'Cairo', sans-serif;
+            --transition: 0.3s cubic-bezier(0.4,0,0.2,1);
+        }
+        body.dark {
+            --bg-primary: #1a202c;
+            --bg-card: #2d3748;
+            --text-primary: #e2e8f0;
+            --text-secondary: #a0aec0;
+            --text-muted: #718096;
+            --border-color: #4a5568;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.4);
+            --shadow-lg: 0 12px 28px rgba(0,0,0,0.5);
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        html { scroll-behavior:smooth; font-size:16px; }
+        body {
+            font-family:var(--font);
+            background:var(--bg-primary);
+            color:var(--text-primary);
+            line-height:1.7;
+            overflow-x:hidden;
+            position:relative;
+            min-height:100vh;
+            transition: background 0.3s, color 0.3s;
+            -webkit-font-smoothing:antialiased;
+        }
+        .main-content { position:relative; z-index:1; }
+        /* Navbar */
+        .navbar {
+            position:sticky; top:0; z-index:1000;
+            background:rgba(246,244,240,0.85); backdrop-filter:blur(15px);
+            border-bottom:1px solid var(--border-color);
+            padding:0 24px; transition:0.3s;
+        }
+        body.dark .navbar { background:rgba(26,32,44,0.85); }
+        .navbar.scrolled { box-shadow:var(--shadow-md); }
+        .navbar-inner {
+            max-width:1200px; margin:0 auto; display:flex; align-items:center;
+            justify-content:space-between; height:64px; gap:16px;
+        }
+        .navbar-logo { display:flex; align-items:center; gap:10px; text-decoration:none; flex-shrink:0; }
+        .navbar-logo .logo-icon {
+            width:42px; height:42px; border-radius:var(--radius-sm); background:var(--gradient-1);
+            display:flex; align-items:center; justify-content:center; font-weight:800; font-size:1.2rem;
+            color:#fff; box-shadow:0 4px 12px rgba(49,130,206,0.3); overflow:hidden;
+        }
+        .navbar-logo .logo-icon img { width:100%; height:100%; object-fit:cover; border-radius:inherit; }
+        .navbar-logo .logo-text { font-size:1rem; font-weight:700; color:var(--text-primary); line-height:1.3; }
+        .navbar-logo .logo-text small { display:block; font-weight:400; font-size:0.68rem; color:var(--text-muted); }
+        .nav-links { display:flex; align-items:center; gap:4px; list-style:none; }
+        .nav-links a {
+            text-decoration:none; color:var(--text-secondary); padding:8px 16px; border-radius:28px;
+            font-size:0.88rem; font-weight:500; transition:0.2s; white-space:nowrap;
+        }
+        .nav-links a:hover, .nav-links a.active { color:var(--accent-2); background:rgba(49,130,206,0.06); }
+        .nav-actions { display:flex; align-items:center; gap:8px; flex-shrink:0; }
+        .btn {
+            display:inline-flex; align-items:center; gap:7px; padding:10px 20px; border-radius:28px;
+            font-family:var(--font); font-size:0.88rem; font-weight:600; cursor:pointer; border:none;
+            text-decoration:none; transition:var(--transition); position:relative; overflow:hidden; white-space:nowrap;
+        }
+        .btn-primary { background:var(--gradient-1); color:#fff; box-shadow:0 6px 20px rgba(49,130,206,0.3); }
+        .btn-primary:hover { transform:translateY(-2px); box-shadow:0 10px 28px rgba(49,130,206,0.4); }
+        .btn-outline { background:transparent; border:2px solid var(--border-color); color:var(--text-primary); }
+        .btn-outline:hover { background:rgba(0,0,0,0.02); border-color:var(--accent-2); }
+        body.dark .btn-outline:hover { background:rgba(255,255,255,0.05); }
+        .btn-ripple { position:relative; overflow:hidden; }
+        .ripple-effect { position:absolute; border-radius:50%; background:rgba(255,255,255,0.3); transform:scale(0); animation:ripple 0.6s ease-out; pointer-events:none; }
+        @keyframes ripple { to { transform:scale(4); opacity:0; } }
+        .hamburger { display:none; flex-direction:column; gap:5px; cursor:pointer; z-index:1001; background:none; border:none; padding:8px; }
+        .hamburger span { display:block; width:24px; height:2.5px; background:var(--text-primary); border-radius:3px; transition:0.3s; }
+        .hamburger.active span:nth-child(1) { transform:rotate(45deg) translate(5px,5px); }
+        .hamburger.active span:nth-child(2) { opacity:0; }
+        .hamburger.active span:nth-child(3) { transform:rotate(-45deg) translate(5px,-5px); }
+        .mobile-menu {
+            display:none; position:fixed; inset:0; background:rgba(246,244,240,0.98); backdrop-filter:blur(20px);
+            z-index:999; flex-direction:column; align-items:center; justify-content:center; gap:20px;
+            opacity:0; visibility:hidden; transition:0.3s;
+        }
+        body.dark .mobile-menu { background:rgba(26,32,44,0.98); }
+        .mobile-menu.active { opacity:1; visibility:visible; }
+        .mobile-menu a { font-size:1.3rem; color:var(--text-primary); text-decoration:none; font-weight:600; }
+        .mobile-menu a:hover { color:var(--accent-2); }
+        .bottom-nav {
+            display:none; position:fixed; bottom:0; left:0; width:100%;
+            background:var(--bg-card); border-top:1px solid var(--border-color);
+            z-index:1000; padding:8px 12px 14px; justify-content:space-around; align-items:center; box-shadow:var(--shadow-md);
+        }
+        .bottom-nav a { display:flex; flex-direction:column; align-items:center; gap:3px; text-decoration:none; color:var(--text-muted); font-size:0.68rem; transition:0.2s; }
+        .bottom-nav a.active, .bottom-nav a:hover { color:var(--accent-2); }
+        .bottom-nav a svg { width:22px; height:22px; }
+        /* Hero */
+        .hero { padding:80px 24px 60px; text-align:center; position:relative; max-width:1000px; margin:0 auto; }
+        .hero-badge {
+            display:inline-flex; align-items:center; gap:8px; background:var(--bg-card); border:1px solid var(--border-color);
+            border-radius:30px; padding:7px 18px; font-size:0.82rem; color:var(--text-secondary);
+            margin-bottom:28px; box-shadow:var(--shadow-sm);
+        }
+        .hero-badge .badge-dot { width:8px; height:8px; border-radius:50%; background:var(--accent-3); animation:dotPulse 1.5s infinite; }
+        @keyframes dotPulse { 0%,100%{opacity:1;box-shadow:0 0 8px var(--accent-3);} 50%{opacity:0.3;} }
+        .hero h1 {
+            font-size:clamp(2rem,5vw,3.5rem); font-weight:900; line-height:1.25; margin-bottom:18px;
+            background:var(--gradient-2); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+        }
+        .hero p { font-size:1.1rem; color:var(--text-secondary); max-width:600px; margin:0 auto 36px; }
+        .hero-buttons { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
+        /* Stats */
+        .stats-section { padding:30px 24px 50px; max-width:1100px; margin:0 auto; }
+        .stats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:18px; }
+        .stat-card {
+            background:var(--bg-card); border:1px solid var(--border-color); border-radius:var(--radius-lg);
+            padding:26px 18px; text-align:center; box-shadow:var(--shadow-sm); transition:0.3s;
+        }
+        .stat-card:hover { transform:translateY(-4px); box-shadow:var(--shadow-lg); }
+        .stat-icon { width:48px; height:48px; border-radius:var(--radius-md); display:flex; align-items:center; justify-content:center; margin:0 auto 14px; font-size:1.4rem; }
+        .stat-icon.blue { background:rgba(49,130,206,0.1); color:#3182ce; }
+        .stat-icon.purple { background:rgba(43,108,176,0.1); color:#2b6cb0; }
+        .stat-icon.teal { background:rgba(44,122,123,0.1); color:#2c7a7b; }
+        .stat-icon.amber { background:rgba(214,158,46,0.1); color:#d69e2e; }
+        .stat-number { font-size:2.2rem; font-weight:800; color:var(--text-primary); }
+        .stat-label { font-size:0.8rem; color:var(--text-muted); }
+        /* Sections */
+        .section { padding:60px 24px; max-width:1100px; margin:0 auto; }
+        .section-header { text-align:center; margin-bottom:44px; }
+        .section-header h2 { font-size:2rem; font-weight:700; margin-bottom:8px; color:var(--text-primary); }
+        .section-header p { color:var(--text-muted); }
+        /* Features */
+        .features-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:18px; }
+        .feature-card {
+            background:var(--bg-card); border:1px solid var(--border-color); border-radius:var(--radius-lg);
+            padding:30px 22px; box-shadow:var(--shadow-sm); transition:0.3s; text-align:center;
+        }
+        .feature-card:hover { transform:translateY(-6px); box-shadow:var(--shadow-lg); }
+        .feature-icon { width:54px; height:54px; border-radius:var(--radius-md); display:flex; align-items:center; justify-content:center; margin:0 auto 14px; font-size:1.5rem; background:rgba(49,130,206,0.1); color:#3182ce; }
+        .feature-card h3 { font-size:1.05rem; font-weight:700; }
+        .feature-card p { font-size:0.85rem; color:var(--text-muted); }
+        /* Stages */
+        .stages-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:22px; }
+        .stage-card {
+            background:var(--bg-card); border:1px solid var(--border-color); border-radius:var(--radius-lg);
+            overflow:hidden; box-shadow:var(--shadow-sm); transition:0.3s; text-decoration:none; color:inherit; display:block;
+        }
+        .stage-card:hover { transform:translateY(-6px); box-shadow:var(--shadow-lg); }
+        .stage-banner { height:160px; display:flex; align-items:center; justify-content:center; font-size:3.5rem; position:relative; }
+        .stage-banner.b1 { background:linear-gradient(135deg, #e2dcd0, #c4b8a8); }
+        .stage-banner.b2 { background:linear-gradient(135deg, #d4cfc4, #b0a898); }
+        .stage-banner.b3 { background:linear-gradient(135deg, #c8c0b4, #a09888); }
+        .stage-info { padding:18px; }
+        .stage-info h3 { font-size:1.05rem; font-weight:700; }
+        .stage-info p { font-size:0.82rem; color:var(--text-muted); }
+        .stage-subject { display:inline-block; margin-top:4px; padding:3px 10px; border-radius:12px; background:rgba(49,130,206,0.1); color:#3182ce; font-size:0.72rem; font-weight:600; }
+        /* Reviews */
+        .reviews-scroll { display:flex; gap:18px; overflow-x:auto; padding:8px 0 18px; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
+        .reviews-scroll::-webkit-scrollbar { display:none; }
+        .review-card {
+            flex:0 0 330px; scroll-snap-align:start; background:var(--bg-card); border:1px solid var(--border-color);
+            border-radius:var(--radius-lg); padding:22px; box-shadow:var(--shadow-sm); transition:0.3s;
+        }
+        .review-card:hover { box-shadow:var(--shadow-lg); }
+        .review-stars { color:#d69e2e; font-size:0.95rem; margin-bottom:8px; }
+        .review-card p { font-size:0.88rem; color:var(--text-secondary); margin-bottom:10px; }
+        .review-author { display:flex; align-items:center; gap:10px; }
+        .review-author .avatar { width:34px; height:34px; border-radius:50%; background:var(--gradient-1); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.85rem; color:#fff; }
+        .review-author .name { font-weight:600; font-size:0.85rem; }
+        .review-author .grade { font-size:0.72rem; color:var(--text-muted); }
+        /* FAQ */
+        .faq-list { display:flex; flex-direction:column; gap:10px; max-width:750px; margin:0 auto; }
+        .faq-item { background:var(--bg-card); border:1px solid var(--border-color); border-radius:var(--radius-md); overflow:hidden; box-shadow:var(--shadow-sm); }
+        .faq-question {
+            width:100%; text-align:right; background:none; border:none; padding:16px 18px;
+            font-family:var(--font); font-size:0.95rem; font-weight:600; color:var(--text-primary);
+            cursor:pointer; display:flex; justify-content:space-between; align-items:center; gap:10px;
+        }
+        .faq-icon { width:26px; height:26px; border-radius:50%; background:rgba(0,0,0,0.04); display:flex; align-items:center; justify-content:center; transition:0.3s; font-size:1.1rem; color:var(--accent-2); }
+        .faq-item.open .faq-icon { transform:rotate(45deg); background:rgba(49,130,206,0.1); }
+        .faq-answer { max-height:0; overflow:hidden; transition:max-height 0.4s ease, padding 0.4s ease; padding:0 18px; color:var(--text-muted); font-size:0.85rem; }
+        .faq-item.open .faq-answer { max-height:180px; padding:0 18px 16px; }
+        /* Footer */
+        .footer { background:var(--bg-card); border-top:1px solid var(--border-color); padding:45px 24px 25px; }
+        .footer-inner { max-width:1100px; margin:0 auto; display:grid; grid-template-columns:2fr 1fr 1fr 1fr; gap:35px; }
+        .footer-col h4 { font-size:0.95rem; font-weight:700; margin-bottom:14px; color:var(--text-primary); }
+        .footer-col a, .footer-col p { display:block; font-size:0.82rem; color:var(--text-muted); text-decoration:none; margin-bottom:7px; transition:0.2s; }
+        .footer-col a:hover { color:var(--accent-2); }
+        .footer-bottom { max-width:1100px; margin:25px auto 0; padding-top:18px; border-top:1px solid var(--border-color); text-align:center; font-size:0.78rem; color:var(--text-muted); }
+        .footer-social { display:flex; gap:10px; margin-top:10px; }
+        .footer-social a {
+            width:34px; height:34px; border-radius:50%; background:rgba(0,0,0,0.03); border:1px solid var(--border-color);
+            display:flex; align-items:center; justify-content:center; color:var(--text-secondary); text-decoration:none; transition:0.2s;
+        }
+        .footer-social a:hover { background:rgba(49,130,206,0.1); color:var(--accent-2); }
+        /* Theme Toggle */
+        .theme-toggle {
+            background:var(--bg-card); border:1px solid var(--border-color); border-radius:24px;
+            padding:8px 12px; cursor:pointer; font-size:1.1rem; color:var(--text-primary); transition:0.2s;
+        }
+        .theme-toggle:hover { background:rgba(0,0,0,0.03); }
+        /* Responsive */
+        @media (max-width:1024px) { .stats-grid, .features-grid, .stages-grid { grid-template-columns:repeat(2,1fr); } .footer-inner { grid-template-columns:1fr 1fr; } }
+        @media (max-width:768px) {
+            .nav-links, .nav-actions .btn { display:none; }
+            .nav-actions .btn-outline { display:inline-flex; font-size:0.78rem; padding:7px 12px; }
+            .hamburger { display:flex; }
+            .mobile-menu { display:flex; }
+            .bottom-nav { display:flex; }
+            body { padding-bottom:70px; }
+            .hero h1 { font-size:1.8rem; }
+            .stats-grid { grid-template-columns:1fr 1fr; gap:10px; }
+            .features-grid, .stages-grid { grid-template-columns:1fr; }
+            .footer-inner { grid-template-columns:1fr; }
+        }
+        .reveal { opacity:0; transform:translateY(30px); transition:opacity 0.7s ease, transform 0.7s ease; }
+        .reveal.visible { opacity:1; transform:translateY(0); }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="main-content">
+        <nav class="navbar" id="navbar">
+            <div class="navbar-inner">
+                <a href="index.html" class="navbar-logo">
+                    <div class="logo-icon" id="logoIcon">M</div>
+                    <span class="logo-text" id="logoText">Mr. Mohammed Elhafawy<small id="logoSlogan">Science & Physics</small></span>
+                </a>
+                <ul class="nav-links">
+                    <li><a href="index.html" class="active">الرئيسية</a></li>
+                    <li><a href="assignments.html">الواجبات</a></li>
+                    <li><a href="exams.html">الامتحانات</a></li>
+                    <li><a href="about.html">عن المنصة</a></li>
+                    <li><a href="contact.html">تواصل معنا</a></li>
+                </ul>
+                <div class="nav-actions">
+                    <button class="theme-toggle" id="themeToggle" title="الوضع الليلي">🌙</button>
+                    <a href="login.html" class="btn btn-outline">تسجيل الدخول</a>
+                    <a href="register.html" class="btn btn-primary btn-ripple">إنشاء حساب</a>
+                    <button class="hamburger" id="hamburgerBtn"><span></span><span></span><span></span></button>
+                </div>
+            </div>
+        </nav>
+
+        <div class="mobile-menu" id="mobileMenu">
+            <a href="index.html">الرئيسية</a><a href="assignments.html">الواجبات</a><a href="exams.html">الامتحانات</a>
+            <a href="about.html">عن المنصة</a><a href="contact.html">تواصل معنا</a>
+            <a href="login.html" class="btn btn-outline">تسجيل الدخول</a>
+            <a href="register.html" class="btn btn-primary">إنشاء حساب</a>
+        </div>
+
+        <section class="hero">
+            <div class="hero-badge reveal"><span class="badge-dot"></span> منصة تعليمية متخصصة في Science & Physics</div>
+            <h1 class="reveal">العلوم أسهل مع<br>Mr. Mohammed Elhafawy</h1>
+            <p class="reveal">منصة متكاملة لحل الواجبات والامتحانات والتواصل المباشر، تقدم Science للمرحلة الإعدادية وIntegrated Science وPhysics للمرحلة الثانوية.</p>
+            <div class="hero-buttons reveal">
+                <a href="register.html" class="btn btn-primary btn-ripple" style="padding:15px 30px;">ابدأ رحلتك الآن</a>
+                <a href="assignments.html" class="btn btn-outline" style="padding:15px 30px;">استعرض الواجبات</a>
+            </div>
+        </section>
+
+        <section class="stats-section reveal">
+            <div class="stats-grid">
+                <div class="stat-card"><div class="stat-icon blue">👥</div><div class="stat-number" data-target="8500" data-suffix="+">0</div><div class="stat-label">طالب مسجل</div></div>
+                <div class="stat-card"><div class="stat-icon purple">📄</div><div class="stat-number" data-target="2400" data-suffix="+">0</div><div class="stat-label">واجب مرفوع</div></div>
+                <div class="stat-card"><div class="stat-icon teal">📝</div><div class="stat-number" data-target="1200" data-suffix="+">0</div><div class="stat-label">امتحان إلكتروني</div></div>
+                <div class="stat-card"><div class="stat-icon amber">⭐</div><div class="stat-number" data-target="96" data-suffix="%">0</div><div class="stat-label">نسبة النجاح</div></div>
+            </div>
+        </section>
+
+        <section class="section reveal" id="features">
+            <div class="section-header"><h2>لماذا منصتنا مختلفة؟</h2><p>نقدم تجربة تعليمية فريدة تجمع بين التكنولوجيا الحديثة وأساليب التدريس المبتكرة</p></div>
+            <div class="features-grid">
+                <div class="feature-card"><div class="feature-icon">📄</div><h3>واجبات مصورة</h3><p>استلم واجباتك كصور مباشرة، صوِّر حلك وارفعه بسهولة.</p></div>
+                <div class="feature-card"><div class="feature-icon">🧠</div><h3>امتحانات ذكية</h3><p>امتحانات اختيارية مع مؤقت زمني وتصحيح تلقائي.</p></div>
+                <div class="feature-card"><div class="feature-icon">💬</div><h3>أسئلة وتفاعل</h3><p>اسأل أي سؤال (نص أو صورة) ويجيبك زملائك أو المستر.</p></div>
+                <div class="feature-card"><div class="feature-icon">🔔</div><h3>إشعارات فورية</h3><p>تصلك تنبيهات بمواعيد الواجبات والامتحانات مباشرة.</p></div>
+                <div class="feature-card"><div class="feature-icon">👥</div><h3>مجموعات دراسية</h3><p>انضم لمجموعتك وتفاعل مع زملائك في نفس المرحلة.</p></div>
+                <div class="feature-card"><div class="feature-icon">📊</div><h3>متابعة مستمرة</h3><p>لوحة تحكم شاملة لمتابعة تقدمك ونتائجك.</p></div>
+            </div>
+        </section>
+
+        <section class="section reveal" id="stages">
+            <div class="section-header"><h2>المراحل الدراسية</h2><p>اختر مرحلتك وابدأ في حل الواجبات والامتحانات</p></div>
+            <div class="stages-grid">
+                <a href="login.html" class="stage-card">
+                    <div class="stage-banner b1">🔬</div>
+                    <div class="stage-info"><h3>المرحلة الإعدادية</h3><p>الصفوف: الأول، الثاني، الثالث الإعدادي</p><span class="stage-subject">Science</span></div>
+                </a>
+                <a href="login.html" class="stage-card">
+                    <div class="stage-banner b2">🧪</div>
+                    <div class="stage-info"><h3>الصف الأول الثانوي</h3><p>Integrated Science</p><span class="stage-subject">Integrated Science</span></div>
+                </a>
+                <a href="login.html" class="stage-card">
+                    <div class="stage-banner b3">⚛️</div>
+                    <div class="stage-info"><h3>المرحلة الثانوية</h3><p>الصفوف: الثاني، الثالث الثانوي</p><span class="stage-subject">Physics</span></div>
+                </a>
+            </div>
+        </section>
+
+        <section class="section reveal" id="reviews">
+            <div class="section-header"><h2>ماذا يقول طلابنا؟</h2><p>آراء حقيقية من طلاب حققوا التفوق معنا</p></div>
+            <div class="reviews-scroll">
+                <div class="review-card"><div class="review-stars">⭐⭐⭐⭐⭐</div><p>"أفضل منصة لشرح العلوم، الأستاذ محمد عنده طريقة رائعة في توصيل المعلومة!"</p><div class="review-author"><div class="avatar">ع</div><div><div class="name">أحمد علي</div><div class="grade">ثالثة إعدادي</div></div></div></div>
+                <div class="review-card"><div class="review-stars">⭐⭐⭐⭐⭐</div><p>"الامتحانات الإلكترونية رهيبة وبتخليني أعرف مستوايا الحقيقي."</p><div class="review-author"><div class="avatar">س</div><div><div class="name">سارة محمد</div><div class="grade">أولى ثانوي</div></div></div></div>
+                <div class="review-card"><div class="review-stars">⭐⭐⭐⭐⭐</div><p>"جبت 98% في الفيزياء بفضل المنصة، الملخصات والمراجعات كانت سر تفوقي."</p><div class="review-author"><div class="avatar">م</div><div><div class="name">محمد خالد</div><div class="grade">ثالثة ثانوي</div></div></div></div>
+                <div class="review-card"><div class="review-stars">⭐⭐⭐⭐⭐</div><p>"الشرح بسيط وممتع، حسيت إني فهمت Science لأول مرة."</p><div class="review-author"><div class="avatar">ن</div><div><div class="name">نورا حسن</div><div class="grade">ثانية إعدادي</div></div></div></div>
+                <div class="review-card"><div class="review-stars">⭐⭐⭐⭐⭐</div><p>"التصميم حلو جدًا، بحس إني بستخدم موقع عالمي مش مجرد منصة تعليمية."</p><div class="review-author"><div class="avatar">ي</div><div><div class="name">يوسف إبراهيم</div><div class="grade">ثانية ثانوي</div></div></div></div>
+            </div>
+        </section>
+
+        <section class="section reveal" id="faq">
+            <div class="section-header"><h2>الأسئلة الشائعة</h2></div>
+            <div class="faq-list">
+                <div class="faq-item"><button class="faq-question"><span>كيف أسجل في المنصة؟</span><span class="faq-icon">+</span></button><div class="faq-answer">يمكنك التسجيل من خلال الضغط على "إنشاء حساب" وملء البيانات المطلوبة. بعد التسجيل سيتم مراجعة حسابك وتفعيله خلال 24 ساعة.</div></div>
+                <div class="faq-item"><button class="faq-question"><span>كيف أستلم الواجبات؟</span><span class="faq-icon">+</span></button><div class="faq-answer">بعد الدخول، اذهب إلى قسم الواجبات وستجد صور الأسئلة التي رفعها المستر. قم بتصوير حلك وارفعه.</div></div>
+                <div class="faq-item"><button class="faq-question"><span>كيف تعمل الامتحانات الإلكترونية؟</span><span class="faq-icon">+</span></button><div class="faq-answer">الامتحانات مصممة بنظام اختيار من متعدد مع مؤقت زمني وتصحيح تلقائي فوري.</div></div>
+                <div class="faq-item"><button class="faq-question"><span>هل يمكنني المشاهدة على الهاتف؟</span><span class="faq-icon">+</span></button><div class="faq-answer">نعم، المنصة مصممة بتقنية Mobile First لتعمل بكفاءة على جميع الأجهزة.</div></div>
+            </div>
+        </section>
+
+        <footer class="footer">
+            <div class="footer-inner">
+                <div class="footer-col"><h4 id="footerTitle">Mr. Mohammed Elhafawy</h4><p>منصة تعليمية متخصصة في Science & Physics.</p><div class="footer-social"><a href="#">▶</a><a href="#">f</a><a href="#">✈</a><a href="#">☎</a></div></div>
+                <div class="footer-col"><h4>روابط سريعة</h4><a href="index.html">الرئيسية</a><a href="assignments.html">الواجبات</a><a href="exams.html">الامتحانات</a><a href="about.html">عن المنصة</a></div>
+                <div class="footer-col"><h4>الدعم</h4><a href="contact.html">تواصل معنا</a><a href="#">الأسئلة الشائعة</a><a href="#">سياسة الخصوصية</a></div>
+                <div class="footer-col"><h4>تواصل معنا</h4><p>📧 info@elhafawy.com</p><p>📍 مصر</p></div>
+            </div>
+            <div class="footer-bottom"><p id="copyright">© 2025 جميع الحقوق محفوظة | Mr. Mohammed Elhafawy</p></div>
+        </footer>
+    </div>
+
+    <nav class="bottom-nav">
+        <a href="index.html" class="active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg><span>الرئيسية</span></a>
+        <a href="assignments.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/></svg><span>الواجبات</span></a>
+        <a href="exams.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/></svg><span>الامتحانات</span></a>
+        <a href="profile.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-7 8-7s8 3 8 7"/></svg><span>حسابي</span></a>
+    </nav>
+
+    <script>
+        (function() {
+            // Firebase
+            const firebaseConfig = {
+                apiKey: "AIzaSyA4ilrZB4P8wwRDLdminQkwS9KYY50XY8c",
+                authDomain: "mr-mohammed-elhafawy.firebaseapp.com",
+                projectId: "mr-mohammed-elhafawy",
+                storageBucket: "mr-mohammed-elhafawy.firebasestorage.app",
+                messagingSenderId: "959200386071",
+                appId: "1:959200386071:web:a70902bb0d6064e6081052"
+            };
+            firebase.initializeApp(firebaseConfig);
+            const db = firebase.firestore();
+
+            // Dark mode toggle
+            const themeToggle = document.getElementById('themeToggle');
+            if (localStorage.getItem('darkMode') === 'true') {
+                document.body.classList.add('dark');
+                themeToggle.textContent = '☀️';
+            }
+            themeToggle.addEventListener('click', () => {
+                document.body.classList.toggle('dark');
+                const isDark = document.body.classList.contains('dark');
+                localStorage.setItem('darkMode', isDark);
+                themeToggle.textContent = isDark ? '☀️' : '🌙';
+            });
+
+            // Load platform settings
+            async function loadSettings() {
+                const doc = await db.collection('settings').doc('platform').get().catch(() => null);
+                if (doc && doc.exists) {
+                    const data = doc.data();
+                    if (data.logo) {
+                        document.getElementById('logoIcon').innerHTML = `<img src="${data.logo}" alt="لوجو" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;">`;
+                    }
+                    if (data.name) {
+                        document.getElementById('logoText').childNodes[0].textContent = data.name + ' ';
+                        document.getElementById('footerTitle').textContent = data.name;
+                        document.title = data.name + ' | ' + (data.slogan || 'Science & Physics');
+                    }
+                    if (data.slogan) {
+                        document.getElementById('logoSlogan').textContent = data.slogan;
+                    }
+                }
+            }
+            loadSettings();
+
+            // Navbar scroll
+            window.addEventListener('scroll', () => document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 50));
+
+            // Hamburger
+            const hamburger = document.getElementById('hamburgerBtn'), mobile = document.getElementById('mobileMenu');
+            hamburger.addEventListener('click', () => { hamburger.classList.toggle('active'); mobile.classList.toggle('active'); document.body.style.overflow = mobile.classList.contains('active') ? 'hidden' : ''; });
+            mobile.querySelectorAll('a').forEach(l => l.addEventListener('click', () => { hamburger.classList.remove('active'); mobile.classList.remove('active'); document.body.style.overflow = ''; }));
+
+            // Ripple
+            document.querySelectorAll('.btn-ripple').forEach(btn => btn.addEventListener('click', function(e) {
+                const ripple = document.createElement('span'); ripple.className = 'ripple-effect';
+                const rect = this.getBoundingClientRect(), size = Math.max(rect.width, rect.height);
+                ripple.style.width = ripple.style.height = size + 'px';
+                ripple.style.left = e.clientX - rect.left - size/2 + 'px';
+                ripple.style.top = e.clientY - rect.top - size/2 + 'px';
+                this.appendChild(ripple); ripple.addEventListener('animationend', () => ripple.remove());
+            }));
+
+            // FAQ accordion
+            document.querySelectorAll('.faq-question').forEach(btn => btn.addEventListener('click', () => {
+                const item = btn.parentElement, open = item.classList.contains('open');
+                document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+                if (!open) item.classList.add('open');
+            }));
+
+            // Stats counter
+            const statsSection = document.querySelector('.stats-section');
+            let animated = false;
+            function animateStats() {
+                if (animated) return; animated = true;
+                document.querySelectorAll('.stat-number[data-target]').forEach(el => {
+                    const target = +el.dataset.target, suffix = el.dataset.suffix || '';
+                    let start = null; const duration = 2000;
+                    function step(ts) { start ||= ts; const p = Math.min((ts-start)/duration,1), val = Math.floor(p*target); el.textContent = val.toLocaleString('ar-EG') + suffix; if (p<1) requestAnimationFrame(step); }
+                    requestAnimationFrame(step);
+                });
+            }
+            const observer = new IntersectionObserver(entries => { entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); if (e.target === statsSection && !animated) animateStats(); } }); }, { threshold: 0.2 });
+            document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+            // Smooth scroll for anchor links
+            document.querySelectorAll('a[href^="#"]').forEach(a => a.addEventListener('click', function(e) {
+                const t = document.querySelector(this.getAttribute('href')); if (t) { e.preventDefault(); t.scrollIntoView({behavior:'smooth'}); }
+            }));
+        })();
+    </script>
+</body>
+</html>
