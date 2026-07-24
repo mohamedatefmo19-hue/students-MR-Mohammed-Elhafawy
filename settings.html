@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>الإعدادات | Mr. Mohammed Elhafawy</title>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <style>
+        :root {
+            --bg-primary: #f6f4f0; --bg-card: #ffffff; --text-primary: #1e2a3a;
+            --text-secondary: #4a5568; --text-muted: #718096; --border-color: #e2dcd0;
+            --accent-1: #3182ce; --accent-2: #2b6cb0; --accent-3: #2c7a7b; --danger: #c53030;
+            --gradient-1: linear-gradient(135deg, #3182ce, #2b6cb0, #2c7a7b);
+            --radius-lg: 20px; --radius-md: 14px; --shadow-sm: 0 1px 3px rgba(0,0,0,0.04);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.06); --font: 'Cairo', sans-serif;
+            --transition: 0.3s cubic-bezier(0.4,0,0.2,1);
+        }
+        body.dark {
+            --bg-primary: #1a202c; --bg-card: #2d3748; --text-primary: #e2e8f0;
+            --text-secondary: #a0aec0; --text-muted: #718096; --border-color: #4a5568;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.3); --shadow-md: 0 4px 12px rgba(0,0,0,0.4);
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:var(--font); background:var(--bg-primary); color:var(--text-primary); display:flex; min-height:100vh; transition: background 0.3s, color 0.3s; }
+        .sidebar {
+            width:260px; background:var(--bg-card); border-left:1px solid var(--border-color);
+            padding:24px 14px; display:flex; flex-direction:column; gap:4px; flex-shrink:0;
+            z-index:50; transition:transform 0.3s; box-shadow:var(--shadow-sm);
+        }
+        .sidebar .logo-icon { width:42px; height:42px; border-radius:var(--radius-md); background:var(--gradient-1); display:flex; align-items:center; justify-content:center; font-weight:700; color:#fff; font-size:1.1rem; margin-bottom:20px; overflow:hidden; }
+        .sidebar .logo-icon img { width:100%; height:100%; object-fit:cover; border-radius:inherit; }
+        .sidebar nav a { display:flex; align-items:center; gap:10px; padding:10px 14px; border-radius:24px; color:var(--text-secondary); text-decoration:none; font-weight:500; font-size:0.88rem; margin-bottom:3px; transition:0.2s; }
+        .sidebar nav a.active, .sidebar nav a:hover { background:rgba(49,130,206,0.08); color:var(--accent-2); }
+        .main { flex:1; display:flex; flex-direction:column; overflow-y:auto; max-height:100vh; background:var(--bg-primary); }
+        .topbar { padding:14px 24px; display:flex; justify-content:space-between; align-items:center; background:var(--bg-card); border-bottom:1px solid var(--border-color); position:sticky; top:0; z-index:20; box-shadow:var(--shadow-sm); }
+        .topbar h2 { font-size:1.2rem; font-weight:700; background:var(--gradient-1); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+        .btn { padding:8px 16px; border-radius:24px; font-weight:600; font-size:0.82rem; border:1.5px solid var(--border-color); background:var(--bg-card); color:var(--text-primary); cursor:pointer; transition:0.2s; display:inline-flex; align-items:center; gap:6px; text-decoration:none; }
+        .btn:hover { background:rgba(0,0,0,0.02); border-color:var(--accent-2); }
+        .btn-primary { background:var(--gradient-1); border:none; color:#fff; }
+        .btn-primary:hover { opacity:0.9; }
+        .content { padding:24px; max-width:700px; margin:0 auto; width:100%; }
+        .card { background:var(--bg-card); border:1px solid var(--border-color); border-radius:var(--radius-lg); padding:20px; margin-bottom:20px; box-shadow:var(--shadow-sm); }
+        .form-group { margin-bottom:16px; }
+        .form-group label { display:block; font-size:0.85rem; margin-bottom:6px; color:var(--text-secondary); }
+        .form-group input { width:100%; padding:12px 16px; border-radius:30px; border:1.5px solid var(--border-color); background:var(--bg-card); color:var(--text-primary); font-family:var(--font); font-size:0.9rem; outline:none; transition:0.25s; }
+        .form-group input:focus { border-color:var(--accent-2); box-shadow:0 0 0 4px rgba(49,130,206,0.1); }
+        .message { padding:10px 14px; border-radius:20px; margin:10px 0; font-size:0.85rem; display:none; }
+        .message.success { background:rgba(44,122,123,0.1); color:#276749; border:1px solid rgba(44,122,123,0.3); }
+        .message.error { background:rgba(197,48,48,0.1); color:#b91c1c; border:1px solid rgba(197,48,48,0.3); }
+        .toggle-row { display:flex; justify-content:space-between; align-items:center; padding:8px 0; }
+        .toggle { width:44px; height:24px; background:rgba(0,0,0,0.15); border-radius:12px; position:relative; cursor:pointer; transition:0.3s; }
+        .toggle.active { background:var(--gradient-1); }
+        .toggle::after { content:''; position:absolute; width:20px; height:20px; background:#fff; border-radius:50%; top:2px; right:2px; transition:0.3s; box-shadow:0 1px 3px rgba(0,0,0,0.2); }
+        .toggle.active::after { right:22px; }
+        .theme-toggle { background:var(--bg-card); border:1px solid var(--border-color); border-radius:20px; padding:6px 10px; cursor:pointer; font-size:1rem; color:var(--text-primary); transition:0.2s; }
+        .theme-toggle:hover { background:rgba(0,0,0,0.03); }
+        @media (max-width:768px) {
+            .sidebar { position:fixed; right:-280px; top:0; bottom:0; z-index:55; }
+            .sidebar.open { right:0; }
+        }
+        .menu-toggle { display:none; background:none; border:none; color:var(--text-primary); font-size:1.6rem; cursor:pointer; }
+        @media (max-width:768px) { .menu-toggle { display:block; } }
+        .overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.3); z-index:40; }
+        .overlay.show { display:block; }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="overlay" id="overlay"></div>
+<aside class="sidebar" id="sidebar">
+    <div class="logo-icon" id="sidebarLogo">M</div>
+    <nav>
+        <a href="dashboard.html">🏠 الرئيسية</a>
+        <a href="assignments.html">📄 الواجبات</a>
+        <a href="exams.html">📝 الامتحانات</a>
+        <a href="schedule.html">📅 جداول الحصص</a>
+        <a href="questions.html">💬 الأسئلة</a>
+        <a href="profile.html">👤 حسابي</a>
+        <a href="settings.html" class="active">⚙️ الإعدادات</a>
+    </nav>
+</aside>
+<div class="main">
+    <div class="topbar">
+        <button class="menu-toggle" id="menuToggle">☰</button>
+        <h2>⚙️ الإعدادات</h2>
+        <div style="display:flex; gap:10px; align-items:center;">
+            <button class="theme-toggle" id="themeToggle" title="الوضع الليلي">🌙</button>
+            <a href="dashboard.html" class="btn">رجوع</a>
+        </div>
+    </div>
+    <div class="content">
+        <div class="card">
+            <h3>🔒 تغيير كلمة المرور</h3>
+            <div class="form-group"><label>كلمة المرور الحالية</label><input type="password" id="currentPassword" placeholder="••••••••"></div>
+            <div class="form-group"><label>كلمة المرور الجديدة</label><input type="password" id="newPassword" placeholder="••••••••" minlength="6"></div>
+            <button class="btn btn-primary" onclick="changePassword()">تحديث كلمة المرور</button>
+            <div class="message" id="passwordMsg"></div>
+        </div>
+        <div class="card">
+            <h3>📱 تحديث رقم الهاتف</h3>
+            <div class="form-group"><label>رقم الهاتف الجديد</label><input type="tel" id="newPhone" placeholder="+201234567890"></div>
+            <button class="btn btn-primary" onclick="updatePhone()">حفظ الرقم</button>
+            <div class="message" id="phoneMsg"></div>
+        </div>
+        <div class="card">
+            <h3>🔔 تفضيلات الإشعارات</h3>
+            <div class="toggle-row"><span>استلام إشعارات الواجبات</span><div class="toggle active" id="toggleAssign" onclick="togglePref('assignNotif')"></div></div>
+            <div class="toggle-row"><span>استلام إشعارات الامتحانات</span><div class="toggle active" id="toggleExam" onclick="togglePref('examNotif')"></div></div>
+            <button class="btn btn-primary" onclick="savePreferences()">حفظ التفضيلات</button>
+            <div class="message" id="prefMsg"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyA4ilrZB4P8wwRDLdminQkwS9KYY50XY8c",
+        authDomain: "mr-mohammed-elhafawy.firebaseapp.com",
+        projectId: "mr-mohammed-elhafawy",
+        storageBucket: "mr-mohammed-elhafawy.firebasestorage.app",
+        messagingSenderId: "959200386071",
+        appId: "1:959200386071:web:a70902bb0d6064e6081052"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    const studentId = localStorage.getItem('studentId');
+    if (!studentId) window.location.href = 'login.html';
+
+    // Theme
+    const themeToggle = document.getElementById('themeToggle');
+    if (localStorage.getItem('darkMode') === 'true') { document.body.classList.add('dark'); themeToggle.textContent = '☀️'; }
+    themeToggle.addEventListener('click', () => { document.body.classList.toggle('dark'); const isDark = document.body.classList.contains('dark'); localStorage.setItem('darkMode', isDark); themeToggle.textContent = isDark ? '☀️' : '🌙'; });
+
+    // Load logo
+    (async function loadSettings() {
+        const doc = await db.collection('settings').doc('platform').get().catch(() => null);
+        if (doc && doc.exists && doc.data().logo) document.getElementById('sidebarLogo').innerHTML = `<img src="${doc.data().logo}" alt="لوجو">`;
+        // تحميل تفضيلات الإشعارات
+        const prefDoc = await db.collection('studentSettings').doc(studentId).get().catch(() => null);
+        if (prefDoc && prefDoc.exists) {
+            const prefs = prefDoc.data();
+            if (prefs.assignNotif === false) document.getElementById('toggleAssign').classList.remove('active');
+            if (prefs.examNotif === false) document.getElementById('toggleExam').classList.remove('active');
+        }
+    })();
+
+    window.togglePref = function(pref) {
+        const el = pref === 'assignNotif' ? document.getElementById('toggleAssign') : document.getElementById('toggleExam');
+        el.classList.toggle('active');
+    };
+
+    window.savePreferences = async function() {
+        const assignNotif = document.getElementById('toggleAssign').classList.contains('active');
+        const examNotif = document.getElementById('toggleExam').classList.contains('active');
+        await db.collection('studentSettings').doc(studentId).set({ assignNotif, examNotif }, { merge: true });
+        const msg = document.getElementById('prefMsg');
+        msg.className = 'message success'; msg.style.display = 'block'; msg.textContent = '✅ تم حفظ التفضيلات';
+        setTimeout(() => msg.style.display = 'none', 2500);
+    };
+
+    window.changePassword = async function() {
+        const current = document.getElementById('currentPassword').value;
+        const newPass = document.getElementById('newPassword').value;
+        const msg = document.getElementById('passwordMsg');
+        if (!current || !newPass) { msg.className='message error'; msg.style.display='block'; msg.textContent='يرجى إدخال كلمتي المرور'; return; }
+        if (newPass.length < 6) { msg.className='message error'; msg.style.display='block'; msg.textContent='كلمة المرور يجب أن تكون 6 أحرف على الأقل'; return; }
+        const user = auth.currentUser;
+        if (!user) { msg.className='message error'; msg.style.display='block'; msg.textContent='يجب تسجيل الدخول أولاً'; return; }
+        try {
+            const credential = firebase.auth.EmailAuthProvider.credential(user.email, current);
+            await user.reauthenticateWithCredential(credential);
+            await user.updatePassword(newPass);
+            msg.className = 'message success'; msg.style.display = 'block'; msg.textContent = '✅ تم تغيير كلمة المرور بنجاح';
+            document.getElementById('currentPassword').value = '';
+            document.getElementById('newPassword').value = '';
+        } catch(e) {
+            msg.className = 'message error'; msg.style.display = 'block';
+            msg.textContent = e.code === 'auth/wrong-password' ? 'كلمة المرور الحالية غير صحيحة' : 'حدث خطأ';
+        }
+    };
+
+    window.updatePhone = async function() {
+        const phone = document.getElementById('newPhone').value.trim();
+        const msg = document.getElementById('phoneMsg');
+        if (!phone) { msg.className='message error'; msg.style.display='block'; msg.textContent='أدخل رقم الهاتف'; return; }
+        await db.collection('students').doc(studentId).update({ phone });
+        msg.className = 'message success'; msg.style.display = 'block'; msg.textContent = '✅ تم تحديث رقم الهاتف';
+        setTimeout(() => msg.style.display = 'none', 2500);
+    };
+
+    // Mobile menu
+    document.getElementById('menuToggle').addEventListener('click', () => { document.getElementById('sidebar').classList.toggle('open'); document.getElementById('overlay').classList.toggle('show'); });
+    document.getElementById('overlay').addEventListener('click', () => { document.getElementById('sidebar').classList.remove('open'); document.getElementById('overlay').classList.remove('show'); });
+    window.logout = () => { localStorage.clear(); window.location.href = 'login.html'; };
+</script>
+</body>
+</html>
