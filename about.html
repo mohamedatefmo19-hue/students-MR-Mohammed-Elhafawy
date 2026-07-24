@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="عن المنصة - Mr. Mohammed Elhafawy">
+    <meta name="theme-color" content="#f6f4f0">
+    <title>عن المنصة | Mr. Mohammed Elhafawy</title>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <style>
+        :root {
+            --bg-primary: #f6f4f0;
+            --bg-card: #ffffff;
+            --text-primary: #1e2a3a;
+            --text-secondary: #4a5568;
+            --text-muted: #718096;
+            --border-color: #e2dcd0;
+            --accent-1: #3182ce;
+            --accent-2: #2b6cb0;
+            --accent-3: #2c7a7b;
+            --gradient-1: linear-gradient(135deg, #3182ce, #2b6cb0, #2c7a7b);
+            --gradient-2: linear-gradient(135deg, #2b6cb0, #3182ce, #2c7a7b);
+            --radius-lg: 20px;
+            --radius-md: 14px;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.04);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.06);
+            --font: 'Cairo', sans-serif;
+            --transition: 0.3s cubic-bezier(0.4,0,0.2,1);
+        }
+        body.dark {
+            --bg-primary: #1a202c;
+            --bg-card: #2d3748;
+            --text-primary: #e2e8f0;
+            --text-secondary: #a0aec0;
+            --text-muted: #718096;
+            --border-color: #4a5568;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.4);
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        html { scroll-behavior:smooth; font-size:16px; }
+        body {
+            font-family:var(--font);
+            background:var(--bg-primary);
+            color:var(--text-primary);
+            line-height:1.7;
+            overflow-x:hidden;
+            position:relative;
+            min-height:100vh;
+            transition: background 0.3s, color 0.3s;
+            -webkit-font-smoothing:antialiased;
+            padding-bottom:70px;
+        }
+        .main-content { position:relative; z-index:1; }
+        .navbar {
+            position:sticky; top:0; z-index:1000;
+            background:rgba(246,244,240,0.85); backdrop-filter:blur(15px);
+            border-bottom:1px solid var(--border-color);
+            padding:0 16px; transition:0.3s;
+        }
+        body.dark .navbar { background:rgba(26,32,44,0.85); }
+        .navbar.scrolled { box-shadow:var(--shadow-md); }
+        .navbar-inner {
+            max-width:1100px; margin:0 auto; display:flex; align-items:center;
+            justify-content:space-between; height:60px; gap:12px;
+        }
+        .navbar-logo { display:flex; align-items:center; gap:8px; text-decoration:none; flex-shrink:0; }
+        .navbar-logo .logo-icon {
+            width:38px; height:38px; border-radius:var(--radius-md); background:var(--gradient-1);
+            display:flex; align-items:center; justify-content:center; font-weight:800; font-size:1.1rem;
+            color:#fff; box-shadow:0 4px 12px rgba(49,130,206,0.3); overflow:hidden; flex-shrink:0;
+        }
+        .navbar-logo .logo-icon img { width:100%; height:100%; object-fit:cover; border-radius:inherit; }
+        .navbar-logo .logo-text { font-size:0.9rem; font-weight:700; color:var(--text-primary); line-height:1.3; }
+        .navbar-logo .logo-text small { display:block; font-weight:400; font-size:0.65rem; color:var(--text-muted); }
+        .nav-links { display:flex; align-items:center; gap:2px; list-style:none; }
+        .nav-links a {
+            text-decoration:none; color:var(--text-secondary); padding:6px 12px; border-radius:24px;
+            font-size:0.82rem; font-weight:500; transition:0.2s; white-space:nowrap;
+        }
+        .nav-links a:hover, .nav-links a.active { color:var(--accent-2); background:rgba(49,130,206,0.06); }
+        .nav-actions { display:flex; align-items:center; gap:6px; flex-shrink:0; }
+        .btn {
+            display:inline-flex; align-items:center; gap:6px; padding:8px 16px; border-radius:24px;
+            font-family:var(--font); font-size:0.8rem; font-weight:600; cursor:pointer; border:none;
+            text-decoration:none; transition:var(--transition); position:relative; overflow:hidden; white-space:nowrap;
+        }
+        .btn-primary { background:var(--gradient-1); color:#fff; box-shadow:0 4px 14px rgba(49,130,206,0.3); }
+        .btn-primary:hover { transform:translateY(-1px); box-shadow:0 8px 22px rgba(49,130,206,0.4); }
+        .btn-outline { background:transparent; border:2px solid var(--border-color); color:var(--text-primary); }
+        .btn-outline:hover { background:rgba(0,0,0,0.02); border-color:var(--accent-2); }
+        .theme-toggle {
+            background:var(--bg-card); border:1px solid var(--border-color); border-radius:20px;
+            padding:6px 10px; cursor:pointer; font-size:1rem; color:var(--text-primary); transition:0.2s;
+        }
+        .theme-toggle:hover { background:rgba(0,0,0,0.03); }
+        .hamburger { display:none; flex-direction:column; gap:4px; cursor:pointer; z-index:1001; background:none; border:none; padding:6px; }
+        .hamburger span { display:block; width:22px; height:2px; background:var(--text-primary); border-radius:3px; transition:0.3s; }
+        .hamburger.active span:nth-child(1) { transform:rotate(45deg) translate(4px,4px); }
+        .hamburger.active span:nth-child(2) { opacity:0; }
+        .hamburger.active span:nth-child(3) { transform:rotate(-45deg) translate(4px,-4px); }
+        .mobile-menu {
+            display:none; position:fixed; inset:0; background:rgba(246,244,240,0.98); backdrop-filter:blur(20px);
+            z-index:999; flex-direction:column; align-items:center; justify-content:center; gap:16px;
+            opacity:0; visibility:hidden; transition:0.3s;
+        }
+        body.dark .mobile-menu { background:rgba(26,32,44,0.98); }
+        .mobile-menu.active { opacity:1; visibility:visible; }
+        .mobile-menu a { font-size:1.2rem; color:var(--text-primary); text-decoration:none; font-weight:600; }
+        .mobile-menu a:hover { color:var(--accent-2); }
+        .content { padding:40px 20px; max-width:900px; margin:0 auto; }
+        .card { background:var(--bg-card); border:1px solid var(--border-color); border-radius:var(--radius-lg); padding:24px; margin-bottom:20px; box-shadow:var(--shadow-sm); }
+        .about-hero { text-align:center; margin-bottom:32px; }
+        .about-hero .logo-large {
+            width:80px; height:80px; border-radius:20px; background:var(--gradient-1); display:flex;
+            align-items:center; justify-content:center; font-size:2.5rem; color:#fff; margin:0 auto 16px;
+            box-shadow:0 8px 20px rgba(49,130,206,0.3); overflow:hidden;
+        }
+        .about-hero .logo-large img { width:100%; height:100%; object-fit:cover; border-radius:inherit; }
+        .about-hero h2 { font-size:2rem; font-weight:800; background:var(--gradient-2); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; margin-bottom:8px; }
+        .about-hero p { color:var(--text-muted); font-size:1rem; }
+        .section-title { font-size:1.3rem; font-weight:700; margin-bottom:12px; color:var(--text-primary); }
+        .subjects-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(200px,1fr)); gap:14px; margin-top:16px; }
+        .subject-badge {
+            background:var(--bg-card); border:1px solid var(--border-color); border-radius:var(--radius-md);
+            padding:14px; text-align:center; box-shadow:var(--shadow-sm); transition:0.3s;
+        }
+        .subject-badge:hover { transform:translateY(-3px); box-shadow:var(--shadow-md); }
+        .subject-badge .icon { font-size:2rem; margin-bottom:6px; }
+        .subject-badge .name { font-weight:700; font-size:0.9rem; }
+        .subject-badge .grades { font-size:0.75rem; color:var(--text-muted); }
+        .footer { background:var(--bg-card); border-top:1px solid var(--border-color); padding:30px 16px 20px; text-align:center; }
+        .footer p { color:var(--text-muted); font-size:0.8rem; }
+        @media (max-width:768px) {
+            .nav-links { display:none; }
+            .hamburger { display:flex; }
+            .mobile-menu { display:flex; }
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="main-content">
+        <nav class="navbar" id="navbar">
+            <div class="navbar-inner">
+                <a href="index.html" class="navbar-logo">
+                    <div class="logo-icon" id="logoIcon">M</div>
+                    <span class="logo-text" id="logoText">Mr. Mohammed Elhafawy<small id="logoSlogan">Science & Physics</small></span>
+                </a>
+                <ul class="nav-links">
+                    <li><a href="index.html">الرئيسية</a></li>
+                    <li><a href="assignments.html">الواجبات</a></li>
+                    <li><a href="exams.html">الامتحانات</a></li>
+                    <li><a href="about.html" class="active">عن المنصة</a></li>
+                    <li><a href="contact.html">تواصل معنا</a></li>
+                </ul>
+                <div class="nav-actions">
+                    <button class="theme-toggle" id="themeToggle" title="الوضع الليلي">🌙</button>
+                    <a href="login.html" class="btn btn-outline">تسجيل الدخول</a>
+                    <button class="hamburger" id="hamburgerBtn"><span></span><span></span><span></span></button>
+                </div>
+            </div>
+        </nav>
+
+        <div class="mobile-menu" id="mobileMenu">
+            <a href="index.html">الرئيسية</a><a href="assignments.html">الواجبات</a><a href="exams.html">الامتحانات</a>
+            <a href="about.html">عن المنصة</a><a href="contact.html">تواصل معنا</a>
+            <a href="login.html" class="btn btn-primary">تسجيل الدخول</a>
+        </div>
+
+        <div class="content">
+            <div class="about-hero">
+                <div class="logo-large" id="aboutLogo">M</div>
+                <h2 id="aboutTitle">عن منصة Mr. Mohammed Elhafawy</h2>
+                <p id="aboutSlogan">Science & Physics</p>
+            </div>
+
+            <div class="card">
+                <h3 class="section-title">📖 رؤيتنا</h3>
+                <p style="color:var(--text-secondary); line-height:1.9;">نسعى في منصة Mr. Mohammed Elhafawy إلى تقديم تعليم متميز في مادتي العلوم (Science) للمرحلة الإعدادية، والعلوم المتكاملة (Integrated Science) للصف الأول الثانوي، والفيزياء (Physics) للمرحلة الثانوية. نستخدم أحدث التقنيات التفاعلية وأساليب الشرح المبتكرة لجعل التعلم ممتعاً وفعالاً.</p>
+            </div>
+
+            <div class="card">
+                <h3 class="section-title">👨‍🏫 عن المدرس</h3>
+                <p style="color:var(--text-secondary); line-height:1.9;">Mr. Mohammed Elhafawy هو مدرس متخصص في العلوم والفيزياء بخبرة واسعة في تدريس طلاب المرحلتين الإعدادية والثانوية. يتميز بأسلوبه الفريد في تبسيط المفاهيم المعقدة وتقديمها بأسلوب شيق يتناسب مع جميع المستويات.</p>
+            </div>
+
+            <div class="card">
+                <h3 class="section-title">📚 المواد والمراحل</h3>
+                <div class="subjects-grid">
+                    <div class="subject-badge"><div class="icon">🔬</div><div class="name">Science</div><div class="grades">الأول، الثاني، الثالث الإعدادي</div></div>
+                    <div class="subject-badge"><div class="icon">🧪</div><div class="name">Integrated Science</div><div class="grades">الأول الثانوي</div></div>
+                    <div class="subject-badge"><div class="icon">⚛️</div><div class="name">Physics</div><div class="grades">الثاني، الثالث الثانوي</div></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3 class="section-title">🎯 مهمتنا</h3>
+                <p style="color:var(--text-secondary); line-height:1.9;">توفير بيئة تعليمية متكاملة تجمع بين الواجبات المصورة والامتحانات الذكية والتواصل المباشر بين الطالب والمدرس، مما يضمن فهماً عميقاً للمادة وتحقيق أفضل النتائج في الامتحانات.</p>
+            </div>
+        </div>
+
+        <footer class="footer">
+            <p id="copyright">© 2025 جميع الحقوق محفوظة | Mr. Mohammed Elhafawy</p>
+        </footer>
+    </div>
+
+    <script>
+        (function() {
+            const firebaseConfig = {
+                apiKey: "AIzaSyA4ilrZB4P8wwRDLdminQkwS9KYY50XY8c",
+                authDomain: "mr-mohammed-elhafawy.firebaseapp.com",
+                projectId: "mr-mohammed-elhafawy",
+                storageBucket: "mr-mohammed-elhafawy.firebasestorage.app",
+                messagingSenderId: "959200386071",
+                appId: "1:959200386071:web:a70902bb0d6064e6081052"
+            };
+            firebase.initializeApp(firebaseConfig);
+            const db = firebase.firestore();
+
+            // Dark mode
+            const themeToggle = document.getElementById('themeToggle');
+            if (localStorage.getItem('darkMode') === 'true') { document.body.classList.add('dark'); themeToggle.textContent = '☀️'; }
+            themeToggle.addEventListener('click', () => { document.body.classList.toggle('dark'); const isDark = document.body.classList.contains('dark'); localStorage.setItem('darkMode', isDark); themeToggle.textContent = isDark ? '☀️' : '🌙'; });
+
+            // Load settings
+            async function loadSettings() {
+                const doc = await db.collection('settings').doc('platform').get().catch(() => null);
+                if (doc && doc.exists) {
+                    const data = doc.data();
+                    if (data.logo) {
+                        document.getElementById('logoIcon').innerHTML = `<img src="${data.logo}" alt="لوجو" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;">`;
+                        document.getElementById('aboutLogo').innerHTML = `<img src="${data.logo}" alt="لوجو" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;">`;
+                    }
+                    if (data.name) {
+                        document.getElementById('logoText').childNodes[0].textContent = data.name + ' ';
+                        document.getElementById('aboutTitle').textContent = 'عن منصة ' + data.name;
+                        document.getElementById('copyright').innerHTML = `© 2025 جميع الحقوق محفوظة | ${data.name}`;
+                        document.title = 'عن المنصة | ' + data.name;
+                    }
+                    if (data.slogan) {
+                        document.getElementById('logoSlogan').textContent = data.slogan;
+                        document.getElementById('aboutSlogan').textContent = data.slogan;
+                    }
+                }
+            }
+            loadSettings();
+
+            // Hamburger
+            const hamburger = document.getElementById('hamburgerBtn'), mobile = document.getElementById('mobileMenu');
+            hamburger.addEventListener('click', () => { hamburger.classList.toggle('active'); mobile.classList.toggle('active'); document.body.style.overflow = mobile.classList.contains('active') ? 'hidden' : ''; });
+            mobile.querySelectorAll('a').forEach(l => l.addEventListener('click', () => { hamburger.classList.remove('active'); mobile.classList.remove('active'); document.body.style.overflow = ''; }));
+        })();
+    </script>
+</body>
+</html>
