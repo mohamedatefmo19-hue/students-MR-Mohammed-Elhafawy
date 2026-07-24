@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>الأسئلة | Mr. Mohammed Elhafawy</title>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <script src="https://widget.cloudinary.com/v2.0/global/all.js"></script>
+    <style>
+        :root {
+            --bg-primary: #f6f4f0; --bg-card: #ffffff; --text-primary: #1e2a3a;
+            --text-secondary: #4a5568; --text-muted: #718096; --border-color: #e2dcd0;
+            --accent-1: #3182ce; --accent-2: #2b6cb0; --accent-3: #2c7a7b; --danger: #c53030;
+            --gradient-1: linear-gradient(135deg, #3182ce, #2b6cb0, #2c7a7b);
+            --radius-lg: 20px; --radius-md: 14px; --shadow-sm: 0 1px 3px rgba(0,0,0,0.04);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.06); --font: 'Cairo', sans-serif;
+            --transition: 0.3s cubic-bezier(0.4,0,0.2,1);
+        }
+        body.dark {
+            --bg-primary: #1a202c; --bg-card: #2d3748; --text-primary: #e2e8f0;
+            --text-secondary: #a0aec0; --text-muted: #718096; --border-color: #4a5568;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.3); --shadow-md: 0 4px 12px rgba(0,0,0,0.4);
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:var(--font); background:var(--bg-primary); color:var(--text-primary); display:flex; min-height:100vh; transition: background 0.3s, color 0.3s; }
+        .sidebar {
+            width:260px; background:var(--bg-card); border-left:1px solid var(--border-color);
+            padding:24px 14px; display:flex; flex-direction:column; gap:4px; flex-shrink:0;
+            z-index:50; transition:transform 0.3s; box-shadow:var(--shadow-sm);
+        }
+        .sidebar .logo-icon { width:42px; height:42px; border-radius:var(--radius-md); background:var(--gradient-1); display:flex; align-items:center; justify-content:center; font-weight:700; color:#fff; font-size:1.1rem; margin-bottom:20px; overflow:hidden; }
+        .sidebar .logo-icon img { width:100%; height:100%; object-fit:cover; border-radius:inherit; }
+        .sidebar nav a { display:flex; align-items:center; gap:10px; padding:10px 14px; border-radius:24px; color:var(--text-secondary); text-decoration:none; font-weight:500; font-size:0.88rem; margin-bottom:3px; transition:0.2s; }
+        .sidebar nav a.active, .sidebar nav a:hover { background:rgba(49,130,206,0.08); color:var(--accent-2); }
+        .main { flex:1; display:flex; flex-direction:column; overflow-y:auto; max-height:100vh; background:var(--bg-primary); }
+        .topbar { padding:14px 24px; display:flex; justify-content:space-between; align-items:center; background:var(--bg-card); border-bottom:1px solid var(--border-color); position:sticky; top:0; z-index:20; box-shadow:var(--shadow-sm); }
+        .topbar h2 { font-size:1.2rem; font-weight:700; background:var(--gradient-1); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+        .btn { padding:8px 16px; border-radius:24px; font-weight:600; font-size:0.82rem; border:1.5px solid var(--border-color); background:var(--bg-card); color:var(--text-primary); cursor:pointer; transition:0.2s; display:inline-flex; align-items:center; gap:6px; text-decoration:none; }
+        .btn:hover { background:rgba(0,0,0,0.02); border-color:var(--accent-2); }
+        .btn-primary { background:var(--gradient-1); border:none; color:#fff; }
+        .btn-primary:hover { opacity:0.9; }
+        .content { padding:24px; max-width:900px; margin:0 auto; width:100%; }
+        .card { background:var(--bg-card); border:1px solid var(--border-color); border-radius:var(--radius-lg); padding:20px; margin-bottom:16px; box-shadow:var(--shadow-sm); }
+        .question-card img { max-width:100%; max-height:300px; border-radius:var(--radius-md); margin:8px 0; }
+        .replies { margin-top:12px; border-top:1px solid var(--border-color); padding-top:12px; }
+        .reply-item { background:var(--bg-primary); border-radius:var(--radius-md); padding:10px; margin-bottom:8px; }
+        .reply-item img { max-width:80px; max-height:80px; border-radius:8px; margin:4px 0; }
+        .textarea-field { width:100%; padding:10px; border-radius:var(--radius-md); border:1.5px solid var(--border-color); background:var(--bg-card); color:var(--text-primary); font-family:var(--font); resize:vertical; min-height:60px; }
+        .upload-btn { display:inline-flex; align-items:center; gap:6px; padding:8px 14px; border-radius:24px; font-weight:600; font-size:0.8rem; border:1.5px solid var(--border-color); background:var(--bg-card); color:var(--text-primary); cursor:pointer; margin:8px 0; transition:0.2s; }
+        .upload-btn:hover { background:rgba(0,0,0,0.02); border-color:var(--accent-2); }
+        .message { padding:8px 12px; border-radius:14px; font-size:0.8rem; margin:6px 0; display:none; }
+        .message.success { background:rgba(44,122,123,0.1); color:#276749; border:1px solid rgba(44,122,123,0.3); }
+        .message.error { background:rgba(197,48,48,0.1); color:#b91c1c; border:1px solid rgba(197,48,48,0.3); }
+        .empty-state { text-align:center; padding:40px; color:var(--text-muted); }
+        .theme-toggle { background:var(--bg-card); border:1px solid var(--border-color); border-radius:20px; padding:6px 10px; cursor:pointer; font-size:1rem; color:var(--text-primary); transition:0.2s; }
+        .theme-toggle:hover { background:rgba(0,0,0,0.03); }
+        @media (max-width:768px) {
+            .sidebar { position:fixed; right:-280px; top:0; bottom:0; z-index:55; }
+            .sidebar.open { right:0; }
+        }
+        .menu-toggle { display:none; background:none; border:none; color:var(--text-primary); font-size:1.6rem; cursor:pointer; }
+        @media (max-width:768px) { .menu-toggle { display:block; } }
+        .overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.3); z-index:40; }
+        .overlay.show { display:block; }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="overlay" id="overlay"></div>
+<aside class="sidebar" id="sidebar">
+    <div class="logo-icon" id="sidebarLogo">M</div>
+    <nav>
+        <a href="dashboard.html">🏠 الرئيسية</a>
+        <a href="assignments.html">📄 الواجبات</a>
+        <a href="exams.html">📝 الامتحانات</a>
+        <a href="schedule.html">📅 جداول الحصص</a>
+        <a href="questions.html" class="active">💬 الأسئلة</a>
+        <a href="profile.html">👤 حسابي</a>
+        <a href="settings.html">⚙️ الإعدادات</a>
+    </nav>
+</aside>
+<div class="main">
+    <div class="topbar">
+        <button class="menu-toggle" id="menuToggle">☰</button>
+        <h2>💬 الأسئلة والمناقشات</h2>
+        <div style="display:flex; gap:10px; align-items:center;">
+            <button class="theme-toggle" id="themeToggle" title="الوضع الليلي">🌙</button>
+            <a href="dashboard.html" class="btn">رجوع</a>
+        </div>
+    </div>
+    <div class="content" id="questionsContent">⏳ جاري التحميل...</div>
+</div>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyA4ilrZB4P8wwRDLdminQkwS9KYY50XY8c",
+        authDomain: "mr-mohammed-elhafawy.firebaseapp.com",
+        projectId: "mr-mohammed-elhafawy",
+        storageBucket: "mr-mohammed-elhafawy.firebasestorage.app",
+        messagingSenderId: "959200386071",
+        appId: "1:959200386071:web:a70902bb0d6064e6081052"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const CLOUDINARY_CLOUD = "deaevfmvm", CLOUDINARY_PRESET = "ml_default", CLOUDINARY_KEY = "864215656447737";
+    const studentId = localStorage.getItem('studentId');
+    if (!studentId) window.location.href = 'login.html';
+
+    const SUBJECTS = { 'الأول الإعدادي':'Science','الثاني الإعدادي':'Science','الثالث الإعدادي':'Science','الأول الثانوي':'Integrated Science','الثاني الثانوي':'Physics','الثالث الثانوي':'Physics' };
+    let currentUser = null;
+
+    // Theme
+    const themeToggle = document.getElementById('themeToggle');
+    if (localStorage.getItem('darkMode') === 'true') { document.body.classList.add('dark'); themeToggle.textContent = '☀️'; }
+    themeToggle.addEventListener('click', () => { document.body.classList.toggle('dark'); const isDark = document.body.classList.contains('dark'); localStorage.setItem('darkMode', isDark); themeToggle.textContent = isDark ? '☀️' : '🌙'; });
+
+    // Load logo
+    (async function loadSettings() {
+        const doc = await db.collection('settings').doc('platform').get().catch(() => null);
+        if (doc && doc.exists && doc.data().logo) document.getElementById('sidebarLogo').innerHTML = `<img src="${doc.data().logo}" alt="لوجو">`;
+    })();
+
+    async function init() {
+        const userDoc = await db.collection('students').doc(studentId).get();
+        if (!userDoc.exists || userDoc.data().status !== 'مفعل') { window.location.href='login.html'; return; }
+        currentUser = { id: studentId, name: userDoc.data().name, grade: userDoc.data().grade };
+        loadQuestions();
+    }
+
+    function loadQuestions() {
+        const container = document.getElementById('questionsContent');
+        container.innerHTML = '<div style="text-align:center;padding:40px;">⏳ جاري التحميل...</div>';
+
+        db.collection('questions')
+            .where('grade', '==', currentUser.grade)
+            .onSnapshot(snap => {
+                const questions = [];
+                snap.forEach(doc => questions.push({ id: doc.id, ...doc.data() }));
+                questions.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+
+                if (questions.length === 0) {
+                    container.innerHTML = `
+                    <div class="card"><p class="empty-state">لا توجد أسئلة بعد في صفك (${SUBJECTS[currentUser.grade]||''})</p></div>
+                    <div class="card">
+                        <h3>اطرح سؤالاً</h3>
+                        <textarea id="newQuestionText" class="textarea-field" placeholder="اكتب سؤالك..."></textarea>
+                        <input type="hidden" id="newQuestionImage">
+                        <button class="upload-btn" onclick="uploadQuestionImage()">📷 رفع صورة</button>
+                        <div class="message" id="newQuestionMsg"></div>
+                        <button class="btn btn-primary" onclick="submitQuestion()">إرسال السؤال</button>
+                    </div>`;
+                    return;
+                }
+
+                let html = '';
+                questions.forEach(q => {
+                    const replies = q.replies || [];
+                    html += `
+                    <div class="card question-card">
+                        <div style="display:flex; justify-content:space-between;">
+                            <strong>${q.studentName || 'طالب'}</strong>
+                            <span style="color:var(--text-muted); font-size:0.8rem;">${q.createdAt?.toDate?.().toLocaleString('ar-EG') || '—'}</span>
+                        </div>
+                        <p style="margin:8px 0;">${q.text || ''}</p>
+                        ${q.image ? `<img src="${q.image}" alt="صورة السؤال">` : ''}
+                        <div class="replies">
+                            ${replies.map(r => `
+                                <div class="reply-item">
+                                    <strong>${r.userName || 'طالب'}</strong>: ${r.text || ''}
+                                    ${r.image ? `<br><img src="${r.image}" alt="صورة الرد">` : ''}
+                                </div>
+                            `).join('')}
+                        </div>
+                        <button class="btn btn-sm" onclick="showReplyForm('${q.id}')">💬 رد</button>
+                        <div id="replyForm-${q.id}" style="display:none; margin-top:8px;">
+                            <textarea id="replyText-${q.id}" class="textarea-field" placeholder="اكتب ردك..."></textarea>
+                            <input type="hidden" id="replyImage-${q.id}">
+                            <button class="upload-btn" onclick="uploadReplyImage('${q.id}')">📷 صورة</button>
+                            <button class="btn btn-primary btn-sm" onclick="submitReply('${q.id}')">إرسال الرد</button>
+                        </div>
+                    </div>`;
+                });
+
+                html += `
+                <div class="card">
+                    <h3>اطرح سؤالاً</h3>
+                    <textarea id="newQuestionText" class="textarea-field" placeholder="اكتب سؤالك..."></textarea>
+                    <input type="hidden" id="newQuestionImage">
+                    <button class="upload-btn" onclick="uploadQuestionImage()">📷 رفع صورة</button>
+                    <div class="message" id="newQuestionMsg"></div>
+                    <button class="btn btn-primary" onclick="submitQuestion()">إرسال السؤال</button>
+                </div>`;
+                container.innerHTML = html;
+            }, error => {
+                container.innerHTML = '<div class="card empty-state">❌ حدث خطأ في تحميل الأسئلة. تأكد من قواعد Firestore.</div>';
+            });
+    }
+
+    window.uploadQuestionImage = function() {
+        window.cloudinary.openUploadWidget({
+            cloudName: CLOUDINARY_CLOUD, uploadPreset: CLOUDINARY_PRESET, apiKey: CLOUDINARY_KEY,
+            sources: ['local','camera'], multiple: false, resourceType: 'image',
+            clientAllowedFormats: ['png','jpg','jpeg'], maxFileSize: 5000000, language: 'ar'
+        }, (error, result) => {
+            if (!error && result?.event === 'success') {
+                document.getElementById('newQuestionImage').value = result.info.secure_url;
+                const msg = document.getElementById('newQuestionMsg');
+                msg.className = 'message success'; msg.style.display = 'block'; msg.textContent = '✅ تم رفع الصورة';
+            }
+        });
+    };
+
+    window.submitQuestion = async function() {
+        const text = document.getElementById('newQuestionText').value.trim();
+        const image = document.getElementById('newQuestionImage').value;
+        if (!text && !image) { alert('اكتب سؤالاً أو ارفع صورة'); return; }
+        await db.collection('questions').add({
+            studentId: currentUser.id, studentName: currentUser.name, grade: currentUser.grade,
+            text, image, createdAt: firebase.firestore.FieldValue.serverTimestamp(), replies: []
+        });
+        document.getElementById('newQuestionText').value = '';
+        document.getElementById('newQuestionImage').value = '';
+        document.getElementById('newQuestionMsg').style.display = 'none';
+    };
+
+    window.showReplyForm = function(qId) {
+        const el = document.getElementById('replyForm-'+qId);
+        el.style.display = el.style.display === 'none' ? 'block' : 'none';
+    };
+
+    window.uploadReplyImage = function(qId) {
+        window.cloudinary.openUploadWidget({
+            cloudName: CLOUDINARY_CLOUD, uploadPreset: CLOUDINARY_PRESET, apiKey: CLOUDINARY_KEY,
+            sources: ['local','camera'], multiple: false, resourceType: 'image',
+            clientAllowedFormats: ['png','jpg','jpeg'], maxFileSize: 5000000, language: 'ar'
+        }, (error, result) => {
+            if (!error && result?.event === 'success') {
+                document.getElementById('replyImage-'+qId).value = result.info.secure_url;
+            }
+        });
+    };
+
+    window.submitReply = async function(qId) {
+        const text = document.getElementById('replyText-'+qId).value.trim();
+        const image = document.getElementById('replyImage-'+qId).value;
+        if (!text && !image) return;
+        await db.collection('questions').doc(qId).update({
+            replies: firebase.firestore.FieldValue.arrayUnion({
+                userId: currentUser.id, userName: currentUser.name, text, image, createdAt: new Date()
+            })
+        });
+        document.getElementById('replyText-'+qId).value = '';
+        document.getElementById('replyImage-'+qId).value = '';
+        document.getElementById('replyForm-'+qId).style.display = 'none';
+    };
+
+    init();
+
+    // Mobile menu
+    document.getElementById('menuToggle').addEventListener('click', () => { document.getElementById('sidebar').classList.toggle('open'); document.getElementById('overlay').classList.toggle('show'); });
+    document.getElementById('overlay').addEventListener('click', () => { document.getElementById('sidebar').classList.remove('open'); document.getElementById('overlay').classList.remove('show'); });
+    window.logout = () => { localStorage.clear(); window.location.href = 'login.html'; };
+</script>
+</body>
+</html>
