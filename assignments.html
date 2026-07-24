@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>الواجبات | Mr. Mohammed Elhafawy</title>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <script src="https://widget.cloudinary.com/v2.0/global/all.js"></script>
+    <style>
+        :root {
+            --bg-primary: #f6f4f0; --bg-card: #ffffff; --text-primary: #1e2a3a;
+            --text-secondary: #4a5568; --text-muted: #718096; --border-color: #e2dcd0;
+            --accent-1: #3182ce; --accent-2: #2b6cb0; --accent-3: #2c7a7b; --danger: #c53030;
+            --gradient-1: linear-gradient(135deg, #3182ce, #2b6cb0, #2c7a7b);
+            --radius-lg: 20px; --radius-md: 14px; --radius-sm: 10px;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.04); --shadow-md: 0 4px 12px rgba(0,0,0,0.06);
+            --font: 'Cairo', sans-serif; --transition: 0.3s cubic-bezier(0.4,0,0.2,1);
+        }
+        body.dark {
+            --bg-primary: #1a202c; --bg-card: #2d3748; --text-primary: #e2e8f0;
+            --text-secondary: #a0aec0; --text-muted: #718096; --border-color: #4a5568;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.3); --shadow-md: 0 4px 12px rgba(0,0,0,0.4);
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:var(--font); background:var(--bg-primary); color:var(--text-primary); display:flex; min-height:100vh; transition: background 0.3s, color 0.3s; }
+        .sidebar {
+            width:260px; background:var(--bg-card); border-left:1px solid var(--border-color);
+            padding:24px 14px; display:flex; flex-direction:column; gap:4px; flex-shrink:0;
+            z-index:50; transition:transform 0.3s; box-shadow:var(--shadow-sm);
+        }
+        .sidebar .logo-icon { width:42px; height:42px; border-radius:var(--radius-md); background:var(--gradient-1); display:flex; align-items:center; justify-content:center; font-weight:700; color:#fff; font-size:1.1rem; margin-bottom:20px; overflow:hidden; }
+        .sidebar .logo-icon img { width:100%; height:100%; object-fit:cover; border-radius:inherit; }
+        .sidebar nav a { display:flex; align-items:center; gap:10px; padding:10px 14px; border-radius:24px; color:var(--text-secondary); text-decoration:none; font-weight:500; font-size:0.88rem; margin-bottom:3px; transition:0.2s; }
+        .sidebar nav a.active, .sidebar nav a:hover { background:rgba(49,130,206,0.08); color:var(--accent-2); }
+        .main { flex:1; display:flex; flex-direction:column; overflow-y:auto; max-height:100vh; background:var(--bg-primary); }
+        .topbar { padding:14px 24px; display:flex; justify-content:space-between; align-items:center; background:var(--bg-card); border-bottom:1px solid var(--border-color); position:sticky; top:0; z-index:20; box-shadow:var(--shadow-sm); }
+        .topbar h2 { font-size:1.2rem; font-weight:700; background:var(--gradient-1); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+        .btn { padding:8px 16px; border-radius:24px; font-weight:600; font-size:0.82rem; border:1.5px solid var(--border-color); background:var(--bg-card); color:var(--text-primary); cursor:pointer; transition:0.2s; display:inline-flex; align-items:center; gap:6px; text-decoration:none; }
+        .btn:hover { background:rgba(0,0,0,0.02); border-color:var(--accent-2); }
+        .btn-primary { background:var(--gradient-1); border:none; color:#fff; }
+        .btn-primary:hover { opacity:0.9; }
+        .content { padding:24px; max-width:900px; margin:0 auto; width:100%; }
+        .card { background:var(--bg-card); border:1px solid var(--border-color); border-radius:var(--radius-lg); padding:20px; margin-bottom:16px; box-shadow:var(--shadow-sm); }
+        .images-row { display:flex; gap:12px; overflow-x:auto; padding-bottom:8px; margin:12px 0; }
+        .images-row img { width:120px; height:160px; object-fit:cover; border-radius:var(--radius-sm); border:2px solid var(--border-color); transition:0.3s; }
+        .images-row img:hover { border-color:var(--accent-2); transform:scale(1.03); }
+        .badge { padding:4px 10px; border-radius:14px; font-size:0.72rem; font-weight:600; display:inline-block; }
+        .badge-pending { background:rgba(214,158,46,0.15); color:#975a16; }
+        .badge-submitted { background:rgba(49,130,206,0.15); color:#285e8e; }
+        .badge-corrected { background:rgba(44,122,123,0.15); color:#276749; }
+        body.dark .badge-pending { background:rgba(214,158,46,0.2); color:#fbd38d; }
+        body.dark .badge-submitted { background:rgba(49,130,206,0.2); color:#bee3f8; }
+        body.dark .badge-corrected { background:rgba(44,122,123,0.2); color:#81e6d9; }
+        .upload-area { border:2px dashed var(--border-color); border-radius:var(--radius-md); padding:20px; text-align:center; margin-top:12px; }
+        .message { padding:10px 14px; border-radius:20px; margin:10px 0; font-size:0.85rem; display:none; }
+        .message.success { background:rgba(44,122,123,0.1); color:#276749; border:1px solid rgba(44,122,123,0.3); }
+        .message.error { background:rgba(197,48,48,0.1); color:#b91c1c; border:1px solid rgba(197,48,48,0.3); }
+        .empty-state { text-align:center; padding:40px; color:var(--text-muted); }
+        .theme-toggle { background:var(--bg-card); border:1px solid var(--border-color); border-radius:20px; padding:6px 10px; cursor:pointer; font-size:1rem; color:var(--text-primary); transition:0.2s; }
+        .theme-toggle:hover { background:rgba(0,0,0,0.03); }
+        @media (max-width:768px) {
+            .sidebar { position:fixed; right:-280px; top:0; bottom:0; z-index:55; }
+            .sidebar.open { right:0; }
+            .images-row img { width:90px; height:120px; }
+        }
+        .menu-toggle { display:none; background:none; border:none; color:var(--text-primary); font-size:1.6rem; cursor:pointer; }
+        @media (max-width:768px) { .menu-toggle { display:block; } }
+        .overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.3); z-index:40; }
+        .overlay.show { display:block; }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="overlay" id="overlay"></div>
+<aside class="sidebar" id="sidebar">
+    <div class="logo-icon" id="sidebarLogo">M</div>
+    <nav>
+        <a href="dashboard.html">🏠 الرئيسية</a>
+        <a href="assignments.html" class="active">📄 الواجبات</a>
+        <a href="exams.html">📝 الامتحانات</a>
+        <a href="schedule.html">📅 جداول الحصص</a>
+        <a href="questions.html">💬 الأسئلة</a>
+        <a href="profile.html">👤 حسابي</a>
+        <a href="settings.html">⚙️ الإعدادات</a>
+    </nav>
+</aside>
+<div class="main">
+    <div class="topbar">
+        <button class="menu-toggle" id="menuToggle">☰</button>
+        <h2>📄 الواجبات</h2>
+        <div style="display:flex; gap:10px; align-items:center;">
+            <button class="theme-toggle" id="themeToggle" title="الوضع الليلي">🌙</button>
+            <a href="dashboard.html" class="btn">رجوع</a>
+        </div>
+    </div>
+    <div class="content" id="assignmentsContent">⏳ جاري تحميل الواجبات...</div>
+</div>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyA4ilrZB4P8wwRDLdminQkwS9KYY50XY8c",
+        authDomain: "mr-mohammed-elhafawy.firebaseapp.com",
+        projectId: "mr-mohammed-elhafawy",
+        storageBucket: "mr-mohammed-elhafawy.firebasestorage.app",
+        messagingSenderId: "959200386071",
+        appId: "1:959200386071:web:a70902bb0d6064e6081052"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const CLOUDINARY_CLOUD = "deaevfmvm", CLOUDINARY_PRESET = "ml_default", CLOUDINARY_KEY = "864215656447737";
+    const studentId = localStorage.getItem('studentId');
+    if (!studentId) window.location.href = 'login.html';
+
+    const SUBJECTS = { 'الأول الإعدادي':'Science','الثاني الإعدادي':'Science','الثالث الإعدادي':'Science','الأول الثانوي':'Integrated Science','الثاني الثانوي':'Physics','الثالث الثانوي':'Physics' };
+
+    // Theme
+    const themeToggle = document.getElementById('themeToggle');
+    if (localStorage.getItem('darkMode') === 'true') { document.body.classList.add('dark'); themeToggle.textContent = '☀️'; }
+    themeToggle.addEventListener('click', () => { document.body.classList.toggle('dark'); const isDark = document.body.classList.contains('dark'); localStorage.setItem('darkMode', isDark); themeToggle.textContent = isDark ? '☀️' : '🌙'; });
+
+    // Load logo
+    (async function loadSettings() {
+        const doc = await db.collection('settings').doc('platform').get().catch(() => null);
+        if (doc && doc.exists && doc.data().logo) document.getElementById('sidebarLogo').innerHTML = `<img src="${doc.data().logo}" alt="لوجو">`;
+    })();
+
+    async function loadAssignments() {
+        const container = document.getElementById('assignmentsContent');
+        try {
+            const userDoc = await db.collection('students').doc(studentId).get();
+            if (!userDoc.exists || userDoc.data().status !== 'مفعل') { window.location.href='login.html'; return; }
+            const grade = userDoc.data().grade || '';
+
+            let groupId = null;
+            const groupsSnap = await db.collection('groups').where('grade','==',grade).get().catch(() => ({ empty:true, docs:[] }));
+            if (!groupsSnap.empty) { for (const g of groupsSnap.docs) { if (g.data().students?.includes(studentId)) { groupId = g.id; break; } } }
+
+            let assignments = [];
+            if (groupId) { const snap = await db.collection('assignments').where('groupId','==',groupId).get().catch(() => ({ empty:true, docs:[] })); if (!snap.empty) snap.forEach(d => assignments.push({id:d.id, ...d.data()})); }
+            if (assignments.length === 0) { const snap = await db.collection('assignments').where('grade','==',grade).where('groupId','==',null).get().catch(() => ({ empty:true, docs:[] })); if (!snap.empty) snap.forEach(d => assignments.push({id:d.id, ...d.data()})); }
+
+            const submissionsSnap = await db.collection('assignmentSubmissions').where('studentId','==',studentId).get().catch(() => ({ empty:true, docs:[] }));
+            const submissions = {}; if (!submissionsSnap.empty) submissionsSnap.forEach(d => { const s = d.data(); submissions[s.assignmentId] = {id:d.id, ...s}; });
+
+            container.innerHTML = assignments.length ? assignments.map((a, idx) => {
+                const sub = submissions[a.id];
+                const status = sub ? (sub.score !== undefined ? 'corrected' : 'submitted') : 'pending';
+                const statusText = status === 'corrected' ? 'تم التصحيح' : status === 'submitted' ? 'تم التسليم' : 'لم يسلم بعد';
+                const badgeClass = status === 'corrected' ? 'badge-corrected' : status === 'submitted' ? 'badge-submitted' : 'badge-pending';
+                return `
+                <div class="card">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <h3>الواجب ${idx+1}: ${a.title || 'بدون عنوان'}</h3>
+                        <span class="badge ${badgeClass}">${statusText}</span>
+                    </div>
+                    <p style="color:var(--text-muted); font-size:0.8rem;">المادة: ${SUBJECTS[grade]||''}</p>
+                    ${a.images?.length ? `<div class="images-row">${a.images.map(i => `<img src="${i}" alt="سؤال">`).join('')}</div>` : ''}
+                    ${sub ? `
+                        <p style="color:var(--text-muted);">📤 حل مرفوع سابقاً</p>
+                        ${sub.images?.length ? `<div class="images-row">${sub.images.map(i => `<img src="${i}" alt="حل">`).join('')}</div>` : ''}
+                        ${sub.score !== undefined ? `<p style="color:var(--accent-3);">✅ الدرجة: ${sub.score} | تعليق: ${sub.feedback || 'لا يوجد'}</p>` : '<p style="color:#d69e2e;">⏳ بانتظار التصحيح</p>'}
+                    ` : `
+                        <div class="upload-area" id="uploadArea-${a.id}">
+                            <p>📷 ارفع صور حلك هنا</p>
+                            <button class="btn btn-primary" onclick="triggerUpload('${a.id}')">رفع صور الحل</button>
+                            <button class="btn" id="submitBtn-${a.id}" onclick="submitAssignment('${a.id}')">تسليم الواجب</button>
+                            <div class="message" id="msg-${a.id}"></div>
+                            <div class="images-row" id="preview-${a.id}"></div>
+                        </div>
+                    `}
+                </div>`;
+            }).join('') : '<div class="card empty-state">لا توجد واجبات لصفك حالياً</div>';
+        } catch(e) { container.innerHTML = '<div class="card empty-state">❌ حدث خطأ في تحميل الواجبات</div>'; }
+    }
+    loadAssignments();
+
+    const uploadedImages = {};
+    window.triggerUpload = function(assignmentId) {
+        window.cloudinary.openUploadWidget({
+            cloudName: CLOUDINARY_CLOUD, uploadPreset: CLOUDINARY_PRESET, apiKey: CLOUDINARY_KEY,
+            sources: ['local','camera'], multiple: true, resourceType: 'image',
+            clientAllowedFormats: ['png','jpg','jpeg'], maxFileSize: 5000000, language: 'ar'
+        }, (error, result) => {
+            if (!error && result?.event === 'success') {
+                if (!uploadedImages[assignmentId]) uploadedImages[assignmentId] = [];
+                uploadedImages[assignmentId].push(result.info.secure_url);
+                const preview = document.getElementById('preview-'+assignmentId);
+                if (preview) preview.innerHTML += `<img src="${result.info.secure_url}" style="width:100px; height:130px; object-fit:cover; border-radius:8px; border:2px solid var(--accent-2);">`;
+                const msg = document.getElementById('msg-'+assignmentId);
+                if (msg) { msg.className = 'message success'; msg.style.display = 'block'; msg.textContent = `✅ تم رفع ${uploadedImages[assignmentId].length} صور`; }
+            }
+        });
+    };
+
+    window.submitAssignment = async function(assignmentId) {
+        const images = uploadedImages[assignmentId] || [];
+        const msg = document.getElementById('msg-'+assignmentId);
+        const btn = document.getElementById('submitBtn-'+assignmentId);
+        if (images.length === 0) { if (msg) { msg.className = 'message error'; msg.style.display = 'block'; msg.textContent = '⚠️ ارفع صورة واحدة على الأقل'; } return; }
+        if (btn) { btn.disabled = true; btn.textContent = '⏳ جاري التسليم...'; }
+        try {
+            await db.collection('assignmentSubmissions').add({
+                studentId, assignmentId, images,
+                submittedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                score: null, feedback: ''
+            });
+            if (msg) { msg.textContent = '✅ تم التسليم بنجاح!'; }
+            uploadedImages[assignmentId] = [];
+            loadAssignments();
+        } catch(e) {
+            if (msg) { msg.className = 'message error'; msg.textContent = '❌ فشل التسليم'; }
+            if (btn) { btn.disabled = false; btn.textContent = 'تسليم الواجب'; }
+        }
+    };
+
+    document.getElementById('menuToggle').addEventListener('click', () => { document.getElementById('sidebar').classList.toggle('open'); document.getElementById('overlay').classList.toggle('show'); });
+    document.getElementById('overlay').addEventListener('click', () => { document.getElementById('sidebar').classList.remove('open'); document.getElementById('overlay').classList.remove('show'); });
+    window.logout = () => { localStorage.clear(); window.location.href = 'login.html'; };
+</script>
+</body>
+</html>
