@@ -8,49 +8,31 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
     <style>
         :root {
-            --bg-primary: #f6f4f0;
-            --bg-card: #ffffff;
-            --text-primary: #1e2a3a;
-            --text-secondary: #4a5568;
-            --text-muted: #718096;
-            --border-color: #e2dcd0;
-            --accent-1: #3182ce;
-            --accent-2: #2b6cb0;
-            --accent-3: #2c7a7b;
-            --danger: #c53030;
+            --bg-primary: #f6f4f0; --bg-card: #ffffff; --text-primary: #1e2a3a;
+            --text-secondary: #4a5568; --text-muted: #718096; --border-color: #e2dcd0;
+            --accent-1: #3182ce; --accent-2: #2b6cb0; --accent-3: #2c7a7b; --danger: #c53030;
             --gradient-1: linear-gradient(135deg, #3182ce, #2b6cb0, #2c7a7b);
-            --radius-lg: 20px;
-            --radius-md: 14px;
-            --shadow-sm: 0 1px 3px rgba(0,0,0,0.04);
-            --shadow-md: 0 4px 12px rgba(0,0,0,0.06);
-            --font: 'Cairo', sans-serif;
+            --radius-lg: 20px; --radius-md: 14px; --shadow-sm: 0 1px 3px rgba(0,0,0,0.04);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.06); --font: 'Cairo', sans-serif;
             --transition: 0.3s cubic-bezier(0.4,0,0.2,1);
         }
         body.dark {
-            --bg-primary: #1a202c;
-            --bg-card: #2d3748;
-            --text-primary: #e2e8f0;
-            --text-secondary: #a0aec0;
-            --text-muted: #718096;
-            --border-color: #4a5568;
-            --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
-            --shadow-md: 0 4px 12px rgba(0,0,0,0.4);
+            --bg-primary: #1a202c; --bg-card: #2d3748; --text-primary: #e2e8f0;
+            --text-secondary: #a0aec0; --text-muted: #718096; --border-color: #4a5568;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.3); --shadow-md: 0 4px 12px rgba(0,0,0,0.4);
         }
         * { margin:0; padding:0; box-sizing:border-box; }
         html { font-size:16px; }
         body {
-            font-family:var(--font);
-            background:var(--bg-primary);
-            color:var(--text-primary);
-            display:flex; min-height:100vh;
-            overflow-x:hidden; transition: background 0.3s, color 0.3s;
+            font-family:var(--font); background:var(--bg-primary); color:var(--text-primary);
+            display:flex; min-height:100vh; overflow-x:hidden; transition: background 0.3s, color 0.3s;
         }
         @keyframes fadeInUp { from{opacity:0;transform:translateY(16px);} to{opacity:1;transform:translateY(0);} }
         .fade-in-up { animation:fadeInUp 0.4s ease both; }
         .sidebar {
             width:260px; background:var(--bg-card); border-left:1px solid var(--border-color);
-            padding:24px 14px; display:flex; flex-direction:column; gap:4px;
-            flex-shrink:0; z-index:50; transition:transform 0.3s; box-shadow:var(--shadow-sm);
+            padding:24px 14px; display:flex; flex-direction:column; gap:4px; flex-shrink:0;
+            z-index:50; transition:transform 0.3s; box-shadow:var(--shadow-sm);
         }
         .sidebar .logo { display:flex; align-items:center; gap:10px; padding:8px 12px; margin-bottom:20px; text-decoration:none; }
         .sidebar .logo-icon {
@@ -67,7 +49,7 @@
             color:var(--text-secondary); text-decoration:none; font-weight:500; font-size:0.88rem;
             transition:0.2s; cursor:pointer;
         }
-        .sidebar nav a:hover, .sidebar nav a.active { background:rgba(49,130,206,0.06); color:var(--accent-2); }
+        .sidebar nav a:hover, .sidebar nav a.active { background:rgba(49,130,206,0.08); color:var(--accent-2); }
         .sidebar nav a.active { background:rgba(49,130,206,0.1); }
         .sidebar-footer { margin-top:auto; padding-top:12px; border-top:1px solid var(--border-color); }
         .sidebar-footer button {
@@ -218,7 +200,7 @@
                 if (!gSnap.empty) { for (const g of gSnap.docs) { if (g.data().students?.includes(studentId)) { groupId = g.id; break; } } }
             } catch(e) {}
 
-            // جلب الإشعارات
+            // ✅ جلب الإشعارات بالطريقة الصحيحة
             const now = new Date();
             let notifications = [];
             try {
@@ -226,10 +208,13 @@
                 if (!allSnap.empty) {
                     allSnap.forEach(doc => {
                         const n = doc.data();
-                        const gradeMatch = n.targetGrade==='all' || n.targetGrade===grade || !n.targetGrade;
-                        const groupMatch = n.targetGroupId===groupId || !n.targetGroupId;
-                        const studentMatch = n.targetStudentId===studentId || !n.targetStudentId;
-                        if ((gradeMatch && groupMatch) || studentMatch) notifications.push({id:doc.id, ...n});
+                        // ✅ التعديل: شرط الصف أصبح دقيقاً
+                        const gradeMatch = n.targetGrade === 'all' || n.targetGrade === grade;
+                        const groupMatch = n.targetGroupId === groupId || !n.targetGroupId;
+                        const studentMatch = n.targetStudentId === studentId || !n.targetStudentId;
+                        if ((gradeMatch && groupMatch) || studentMatch) {
+                            notifications.push({id:doc.id, ...n});
+                        }
                     });
                 }
             } catch(e) {}
