@@ -460,5 +460,66 @@
             });
         })();
     </script>
+
+    <script>
+    // حماية المنصة من أدوات المطور والسرقة
+    (function() {
+        // منع النقر بالزر الأيمن
+        document.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+            return false;
+        });
+
+        // منع اختصارات لوحة المفاتيح
+        document.addEventListener('keydown', function(e) {
+            // F12
+            if (e.keyCode === 123) {
+                e.preventDefault();
+                return false;
+            }
+            // Ctrl+Shift+I (أدوات المطور)
+            if (e.ctrlKey && e.shiftKey && e.keyCode === 73) {
+                e.preventDefault();
+                return false;
+            }
+            // Ctrl+Shift+J (الكونسول)
+            if (e.ctrlKey && e.shiftKey && e.keyCode === 74) {
+                e.preventDefault();
+                return false;
+            }
+            // Ctrl+U (عرض المصدر)
+            if (e.ctrlKey && e.keyCode === 85) {
+                e.preventDefault();
+                return false;
+            }
+            // Ctrl+S (حفظ الصفحة)
+            if (e.ctrlKey && e.keyCode === 83) {
+                e.preventDefault();
+                return false;
+            }
+            // Ctrl+Shift+C (أدوات المطور - عنصر)
+            if (e.ctrlKey && e.shiftKey && e.keyCode === 67) {
+                e.preventDefault();
+                return false;
+            }
+        });
+
+        // كشف فتح أدوات المطور (اختياري - قد يزعج المطور)
+        let devToolsOpen = false;
+        const threshold = 160;
+        setInterval(function() {
+            const widthThreshold = window.outerWidth - window.innerWidth > threshold;
+            const heightThreshold = window.outerHeight - window.innerHeight > threshold;
+            if (widthThreshold || heightThreshold) {
+                if (!devToolsOpen) {
+                    devToolsOpen = true;
+                    alert('⚠️ لا يمكن استخدام أدوات المطور في هذه المنصة.');
+                }
+            } else {
+                devToolsOpen = false;
+            }
+        }, 1000);
+    })();
+</script>
 </body>
 </html>
