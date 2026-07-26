@@ -199,7 +199,6 @@
             });
     }
 
-    // رفع صورة للسؤال (مسموح)
     window.uploadQuestionImage = function() {
         window.cloudinary.openUploadWidget({
             cloudName: CLOUDINARY_CLOUD, uploadPreset: CLOUDINARY_PRESET, apiKey: CLOUDINARY_KEY,
@@ -214,7 +213,6 @@
         });
     };
 
-    // إرسال سؤال جديد (نص + صورة فقط - بدون صوت)
     window.submitQuestion = async function() {
         const text = document.getElementById('newQuestionText').value.trim();
         const image = document.getElementById('newQuestionImage').value;
@@ -228,13 +226,11 @@
         document.getElementById('newQuestionMsg').style.display = 'none';
     };
 
-    // إظهار/إخفاء نموذج الرد
     window.showReplyForm = function(qId) {
         const el = document.getElementById('replyForm-'+qId);
         el.style.display = el.style.display === 'none' ? 'block' : 'none';
     };
 
-    // رفع صورة في الرد (مسموح)
     window.uploadReplyImage = function(qId) {
         window.cloudinary.openUploadWidget({
             cloudName: CLOUDINARY_CLOUD, uploadPreset: CLOUDINARY_PRESET, apiKey: CLOUDINARY_KEY,
@@ -247,7 +243,6 @@
         });
     };
 
-    // إرسال رد (نص + صورة فقط - بدون صوت للطالب)
     window.submitReply = async function(qId) {
         const text = document.getElementById('replyText-'+qId).value.trim();
         const image = document.getElementById('replyImage-'+qId).value;
@@ -255,7 +250,6 @@
         await db.collection('questions').doc(qId).update({
             replies: firebase.firestore.FieldValue.arrayUnion({
                 userId: currentUser.id, userName: currentUser.name, text, image, createdAt: new Date()
-                // الطالب لا يمكنه إرسال حقل audio
             })
         });
         document.getElementById('replyText-'+qId).value = '';
@@ -265,7 +259,6 @@
 
     init();
 
-    // Mobile menu
     document.getElementById('menuToggle').addEventListener('click', () => { document.getElementById('sidebar').classList.toggle('open'); document.getElementById('overlay').classList.toggle('show'); });
     document.getElementById('overlay').addEventListener('click', () => { document.getElementById('sidebar').classList.remove('open'); document.getElementById('overlay').classList.remove('show'); });
     window.logout = () => { localStorage.clear(); window.location.href = 'login.html'; };
