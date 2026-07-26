@@ -24,11 +24,7 @@
         }
         * { margin:0; padding:0; box-sizing:border-box; }
         body { font-family:var(--font); background:var(--bg-primary); color:var(--text-primary); display:flex; min-height:100vh; transition: background 0.3s, color 0.3s; }
-        .sidebar {
-            width:260px; background:var(--bg-card); border-left:1px solid var(--border-color);
-            padding:24px 14px; display:flex; flex-direction:column; gap:4px; flex-shrink:0;
-            z-index:50; transition:transform 0.3s; box-shadow:var(--shadow-sm);
-        }
+        .sidebar { width:260px; background:var(--bg-card); border-left:1px solid var(--border-color); padding:24px 14px; display:flex; flex-direction:column; gap:4px; flex-shrink:0; z-index:50; transition:transform 0.3s; box-shadow:var(--shadow-sm); }
         .sidebar .logo-icon { width:42px; height:42px; border-radius:var(--radius-md); background:var(--gradient-1); display:flex; align-items:center; justify-content:center; font-weight:700; color:#fff; font-size:1.1rem; margin-bottom:20px; overflow:hidden; }
         .sidebar .logo-icon img { width:100%; height:100%; object-fit:cover; border-radius:inherit; }
         .sidebar nav a { display:flex; align-items:center; gap:10px; padding:10px 14px; border-radius:24px; color:var(--text-secondary); text-decoration:none; font-weight:500; font-size:0.88rem; margin-bottom:3px; transition:0.2s; }
@@ -44,26 +40,22 @@
         .card { background:var(--bg-card); border:1px solid var(--border-color); border-radius:var(--radius-lg); padding:20px; margin-bottom:16px; box-shadow:var(--shadow-sm); }
         .question-card img { max-width:100%; max-height:300px; border-radius:var(--radius-md); margin:8px 0; }
         .replies { margin-top:12px; border-top:1px solid var(--border-color); padding-top:12px; }
-        .reply-item { background:var(--bg-primary); border-radius:var(--radius-md); padding:10px; margin-bottom:8px; }
+        .reply-item { background:var(--bg-primary); border-radius:var(--radius-md); padding:12px; margin-bottom:8px; }
         .reply-item img { max-width:80px; max-height:80px; border-radius:8px; margin:4px 0; }
-        .reply-item audio { width:100%; max-width:300px; height:35px; margin-top:6px; border-radius:20px; }
+        /* تعديل مظهر مشغل الصوت */
+        .reply-item audio { width:100%; max-width:320px; height:38px; margin-top:8px; border-radius:24px; background:var(--bg-card); border:1px solid var(--border-color); }
         .textarea-field { width:100%; padding:10px; border-radius:var(--radius-md); border:1.5px solid var(--border-color); background:var(--bg-card); color:var(--text-primary); font-family:var(--font); resize:vertical; min-height:60px; }
         .upload-btn { display:inline-flex; align-items:center; gap:6px; padding:8px 14px; border-radius:24px; font-weight:600; font-size:0.8rem; border:1.5px solid var(--border-color); background:var(--bg-card); color:var(--text-primary); cursor:pointer; margin:8px 0; transition:0.2s; }
         .upload-btn:hover { background:rgba(0,0,0,0.02); border-color:var(--accent-2); }
         .message { padding:8px 12px; border-radius:14px; font-size:0.8rem; margin:6px 0; display:none; }
         .message.success { background:rgba(44,122,123,0.1); color:#276749; border:1px solid rgba(44,122,123,0.3); }
-        .message.error { background:rgba(197,48,48,0.1); color:#b91c1c; border:1px solid rgba(197,48,48,0.3); }
         .empty-state { text-align:center; padding:40px; color:var(--text-muted); }
         .theme-toggle { background:var(--bg-card); border:1px solid var(--border-color); border-radius:20px; padding:6px 10px; cursor:pointer; font-size:1rem; color:var(--text-primary); transition:0.2s; }
         .theme-toggle:hover { background:rgba(0,0,0,0.03); }
-        @media (max-width:768px) {
-            .sidebar { position:fixed; right:-280px; top:0; bottom:0; z-index:55; }
-            .sidebar.open { right:0; }
-        }
+        @media (max-width:768px) { .sidebar { position:fixed; right:-280px; top:0; bottom:0; z-index:55; } .sidebar.open { right:0; } }
         .menu-toggle { display:none; background:none; border:none; color:var(--text-primary); font-size:1.6rem; cursor:pointer; }
         @media (max-width:768px) { .menu-toggle { display:block; } }
         .overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.3); z-index:40; }
-        .overlay.show { display:block; }
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 </head>
@@ -116,7 +108,6 @@
     if (localStorage.getItem('darkMode') === 'true') { document.body.classList.add('dark'); themeToggle.textContent = '☀️'; }
     themeToggle.addEventListener('click', () => { document.body.classList.toggle('dark'); const isDark = document.body.classList.contains('dark'); localStorage.setItem('darkMode', isDark); themeToggle.textContent = isDark ? '☀️' : '🌙'; });
 
-    // Load logo
     (async function loadSettings() {
         const doc = await db.collection('settings').doc('platform').get().catch(() => null);
         if (doc && doc.exists && doc.data().logo) document.getElementById('sidebarLogo').innerHTML = `<img src="${doc.data().logo}" alt="لوجو">`;
@@ -166,13 +157,16 @@
                         <p style="margin:8px 0;">${q.text || ''}</p>
                         ${q.image ? `<img src="${q.image}" alt="صورة السؤال">` : ''}
                         <div class="replies">
-                            ${replies.map(r => `
+                            ${replies.map(r => {
+                                // ✅ دعم الحقلين audio و voice لتوافق أكبر
+                                const audioSrc = r.audio || r.voice || '';
+                                return `
                                 <div class="reply-item">
                                     <strong>${r.userName || 'طالب'}</strong>: ${r.text || ''}
                                     ${r.image ? `<br><img src="${r.image}" alt="صورة الرد">` : ''}
-                                    ${r.audio ? `<br><audio controls src="${r.audio}" style="width:100%; max-width:300px; height:35px; margin-top:6px;"></audio>` : ''}
-                                </div>
-                            `).join('')}
+                                    ${audioSrc ? `<br><audio controls src="${audioSrc}"></audio>` : ''}
+                                </div>`;
+                            }).join('')}
                         </div>
                         <button class="btn btn-sm" onclick="showReplyForm('${q.id}')">💬 رد</button>
                         <div id="replyForm-${q.id}" style="display:none; margin-top:8px;">
@@ -200,68 +194,34 @@
     }
 
     window.uploadQuestionImage = function() {
-        window.cloudinary.openUploadWidget({
-            cloudName: CLOUDINARY_CLOUD, uploadPreset: CLOUDINARY_PRESET, apiKey: CLOUDINARY_KEY,
-            sources: ['local','camera'], multiple: false, resourceType: 'image',
-            clientAllowedFormats: ['png','jpg','jpeg'], maxFileSize: 5000000, language: 'ar'
-        }, (error, result) => {
-            if (!error && result?.event === 'success') {
-                document.getElementById('newQuestionImage').value = result.info.secure_url;
-                const msg = document.getElementById('newQuestionMsg');
-                msg.className = 'message success'; msg.style.display = 'block'; msg.textContent = '✅ تم رفع الصورة';
-            }
+        window.cloudinary.openUploadWidget({ cloudName:CLOUDINARY_CLOUD, uploadPreset:CLOUDINARY_PRESET, apiKey:CLOUDINARY_KEY, sources:['local','camera'], multiple:false, resourceType:'image', clientAllowedFormats:['png','jpg','jpeg'], maxFileSize:5000000, language:'ar' }, (error, result) => {
+            if (!error && result?.event==='success') { document.getElementById('newQuestionImage').value=result.info.secure_url; const m=document.getElementById('newQuestionMsg'); m.className='message success'; m.style.display='block'; m.textContent='✅ تم رفع الصورة'; }
         });
     };
 
     window.submitQuestion = async function() {
-        const text = document.getElementById('newQuestionText').value.trim();
-        const image = document.getElementById('newQuestionImage').value;
-        if (!text && !image) { alert('اكتب سؤالاً أو ارفع صورة'); return; }
-        await db.collection('questions').add({
-            studentId: currentUser.id, studentName: currentUser.name, grade: currentUser.grade,
-            text, image, createdAt: firebase.firestore.FieldValue.serverTimestamp(), replies: []
-        });
-        document.getElementById('newQuestionText').value = '';
-        document.getElementById('newQuestionImage').value = '';
-        document.getElementById('newQuestionMsg').style.display = 'none';
+        const text = document.getElementById('newQuestionText').value.trim(), image = document.getElementById('newQuestionImage').value;
+        if(!text && !image) return alert('اكتب سؤالاً أو ارفع صورة');
+        await db.collection('questions').add({ studentId:currentUser.id, studentName:currentUser.name, grade:currentUser.grade, text, image, createdAt:firebase.firestore.FieldValue.serverTimestamp(), replies:[] });
+        document.getElementById('newQuestionText').value=''; document.getElementById('newQuestionImage').value=''; document.getElementById('newQuestionMsg').style.display='none';
     };
 
-    window.showReplyForm = function(qId) {
-        const el = document.getElementById('replyForm-'+qId);
-        el.style.display = el.style.display === 'none' ? 'block' : 'none';
-    };
-
+    window.showReplyForm = function(qId) { const el=document.getElementById('replyForm-'+qId); el.style.display = el.style.display==='none'?'block':'none'; };
     window.uploadReplyImage = function(qId) {
-        window.cloudinary.openUploadWidget({
-            cloudName: CLOUDINARY_CLOUD, uploadPreset: CLOUDINARY_PRESET, apiKey: CLOUDINARY_KEY,
-            sources: ['local','camera'], multiple: false, resourceType: 'image',
-            clientAllowedFormats: ['png','jpg','jpeg'], maxFileSize: 5000000, language: 'ar'
-        }, (error, result) => {
-            if (!error && result?.event === 'success') {
-                document.getElementById('replyImage-'+qId).value = result.info.secure_url;
-            }
-        });
+        window.cloudinary.openUploadWidget({ cloudName:CLOUDINARY_CLOUD, uploadPreset:CLOUDINARY_PRESET, apiKey:CLOUDINARY_KEY, sources:['local','camera'], multiple:false, resourceType:'image', clientAllowedFormats:['png','jpg','jpeg'], maxFileSize:5000000, language:'ar' }, (error, result) => { if(!error && result?.event==='success') document.getElementById('replyImage-'+qId).value=result.info.secure_url; });
     };
 
     window.submitReply = async function(qId) {
-        const text = document.getElementById('replyText-'+qId).value.trim();
-        const image = document.getElementById('replyImage-'+qId).value;
-        if (!text && !image) return;
-        await db.collection('questions').doc(qId).update({
-            replies: firebase.firestore.FieldValue.arrayUnion({
-                userId: currentUser.id, userName: currentUser.name, text, image, createdAt: new Date()
-            })
-        });
-        document.getElementById('replyText-'+qId).value = '';
-        document.getElementById('replyImage-'+qId).value = '';
-        document.getElementById('replyForm-'+qId).style.display = 'none';
+        const text = document.getElementById('replyText-'+qId).value.trim(), image = document.getElementById('replyImage-'+qId).value;
+        if(!text && !image) return;
+        await db.collection('questions').doc(qId).update({ replies: firebase.firestore.FieldValue.arrayUnion({ userId:currentUser.id, userName:currentUser.name, text, image, createdAt:new Date() }) });
+        document.getElementById('replyText-'+qId).value=''; document.getElementById('replyImage-'+qId).value=''; document.getElementById('replyForm-'+qId).style.display='none';
     };
 
     init();
-
-    document.getElementById('menuToggle').addEventListener('click', () => { document.getElementById('sidebar').classList.toggle('open'); document.getElementById('overlay').classList.toggle('show'); });
-    document.getElementById('overlay').addEventListener('click', () => { document.getElementById('sidebar').classList.remove('open'); document.getElementById('overlay').classList.remove('show'); });
-    window.logout = () => { localStorage.clear(); window.location.href = 'login.html'; };
+    document.getElementById('menuToggle').addEventListener('click', ()=>{ document.getElementById('sidebar').classList.toggle('open'); document.getElementById('overlay').classList.toggle('show'); });
+    document.getElementById('overlay').addEventListener('click', ()=>{ document.getElementById('sidebar').classList.remove('open'); document.getElementById('overlay').classList.remove('show'); });
+    window.logout = () => { localStorage.clear(); window.location.href='login.html'; };
 </script>
 </body>
 </html>
