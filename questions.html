@@ -46,6 +46,7 @@
         .replies { margin-top:12px; border-top:1px solid var(--border-color); padding-top:12px; }
         .reply-item { background:var(--bg-primary); border-radius:var(--radius-md); padding:10px; margin-bottom:8px; }
         .reply-item img { max-width:80px; max-height:80px; border-radius:8px; margin:4px 0; }
+        .reply-item audio { width:100%; max-width:300px; height:35px; margin-top:6px; }
         .textarea-field { width:100%; padding:10px; border-radius:var(--radius-md); border:1.5px solid var(--border-color); background:var(--bg-card); color:var(--text-primary); font-family:var(--font); resize:vertical; min-height:60px; }
         .upload-btn { display:inline-flex; align-items:center; gap:6px; padding:8px 14px; border-radius:24px; font-weight:600; font-size:0.8rem; border:1.5px solid var(--border-color); background:var(--bg-card); color:var(--text-primary); cursor:pointer; margin:8px 0; transition:0.2s; }
         .upload-btn:hover { background:rgba(0,0,0,0.02); border-color:var(--accent-2); }
@@ -169,6 +170,7 @@
                                 <div class="reply-item">
                                     <strong>${r.userName || 'طالب'}</strong>: ${r.text || ''}
                                     ${r.image ? `<br><img src="${r.image}" alt="صورة الرد">` : ''}
+                                    ${r.audio ? `<br><audio controls src="${r.audio}"></audio>` : ''}
                                 </div>
                             `).join('')}
                         </div>
@@ -176,7 +178,9 @@
                         <div id="replyForm-${q.id}" style="display:none; margin-top:8px;">
                             <textarea id="replyText-${q.id}" class="textarea-field" placeholder="اكتب ردك..."></textarea>
                             <input type="hidden" id="replyImage-${q.id}">
+                            <input type="hidden" id="replyAudio-${q.id}">
                             <button class="upload-btn" onclick="uploadReplyImage('${q.id}')">📷 صورة</button>
+                            <button class="upload-btn" onclick="uploadReplyAudio('${q.id}')">🎤 صوت</button>
                             <button class="btn btn-primary btn-sm" onclick="submitReply('${q.id}')">إرسال الرد</button>
                         </div>
                     </div>`;
@@ -241,17 +245,36 @@
         });
     };
 
+    window.uploadReplyAudio = function(qId) {
+        window.cloudinary.openUploadWidget({
+            cloudName: CLOUDINARY_CLOUD, uploadPreset: CLOUDINARY_PRESET, apiKey: CLOUDINARY_KEY,
+            sources: ['local', 'url'], multiple: false, resourceType: 'video',
+            clientAllowedFormats: ['mp3', 'wav', 'ogg', 'm4a', 'webm'],
+            maxFileSize: 10000000, language: 'ar'
+        }, (error, result) => {
+            if (!error && result?.event === 'success') {
+                document.getElementById('replyAudio-'+qId).value = result.info.secure_url;
+                alert('✅ تم رفع الملف الصوتي بنجاح');
+            }
+        });
+    };
+
     window.submitReply = async function(qId) {
         const text = document.getElementById('replyText-'+qId).value.trim();
         const image = document.getElementById('replyImage-'+qId).value;
-        if (!text && !image) return;
+        const audio = document.getElementById('replyAudio-'+qId).value;
+        if (!text && !image && !audio) return;
         await db.collection('questions').doc(qId).update({
             replies: firebase.firestore.FieldValue.arrayUnion({
-                userId: currentUser.id, userName: currentUser.name, text, image, createdAt: new Date()
+                userId: currentUser.id,
+                userName: currentUser.name,
+                text, image, audio,
+                createdAt: new Date()
             })
         });
         document.getElementById('replyText-'+qId).value = '';
         document.getElementById('replyImage-'+qId).value = '';
+        document.getElementById('replyAudio-'+qId).value = '';
         document.getElementById('replyForm-'+qId).style.display = 'none';
     };
 
